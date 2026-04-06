@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aerial Control Lab</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div class="intro intro--active" id="intro">
+      <div class="intro__core">
+        <div class="intro__halo"></div>
+        <div class="intro__orb"></div>
+        <div class="intro__title-wrap">
+          <div class="intro__eyebrow">Optimal Control + State Estimation</div>
+          <h1 class="intro__title">Aerial Control Lab</h1>
+          <p class="intro__subtitle">
+            Nonlinear quadcopter dynamics, LQR hover control, and Kalman fusion in one polished sandbox.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <div class="ambient ambient--left"></div>
+      <div class="ambient ambient--right"></div>
+
+      <header class="topbar glass">
+        <div class="brand">
+          <div class="brand__glyph">
+            <span class="brand__ring"></span>
+            <span class="brand__dot brand__dot--a"></span>
+            <span class="brand__dot brand__dot--b"></span>
+            <span class="brand__dot brand__dot--c"></span>
+            <span class="brand__dot brand__dot--d"></span>
+          </div>
+          <div>
+            <div class="brand__title">Aerial Control Lab</div>
+            <div class="brand__subtitle">Blue-gold quadcopter controls studio</div>
+          </div>
+        </div>
+        <div class="topbar__meta">
+          <span class="pill">LQR</span>
+          <span class="pill">Kalman</span>
+          <span class="pill">6-DOF</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="viewport glass">
+          <div class="viewport__header">
+            <div>
+              <span class="eyebrow">Simulation View</span>
+              <h2>Hover Recovery With Live Estimation</h2>
+            </div>
+            <div class="status">
+              <span class="status__dot" id="statusDot"></span>
+              <span id="statusLabel">Stabilizing</span>
+            </div>
+          </div>
+          <canvas id="sceneCanvas" width="1240" height="760"></canvas>
+        </section>
+
+        <aside class="sidebar">
+          <section class="panel glass">
+            <span class="eyebrow">Control Deck</span>
+            <div class="control-grid">
+              <button class="button button--primary" id="resetButton">Reset</button>
+              <button class="button" id="gustButton">Wind Gust</button>
+              <button class="button" id="targetButton">Target: Hover</button>
+              <button class="button" id="scenarioButton">Scenario: Recover</button>
+            </div>
+            <div class="slider-stack" id="sliderStack"></div>
+          </section>
+
+          <section class="panel glass">
+            <span class="eyebrow">Telemetry</span>
+            <div class="telemetry-grid">
+              <div class="metric">
+                <span class="metric__label">Position Error</span>
+                <strong id="positionError">0.00 m</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Attitude Error</span>
+                <strong id="attitudeError">0.0 deg</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Wind Force</span>
+                <strong id="windValue">0.0 N</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Settling Hint</span>
+                <strong id="settleValue">Recovering</strong>
+              </div>
+            </div>
+            <div class="readouts">
+              <div class="readout">
+                <div class="readout__title">Motor Command</div>
+                <canvas id="motorCanvas" width="360" height="110"></canvas>
+              </div>
+              <div class="readout">
+                <div class="readout__title">Estimated vs True Error</div>
+                <canvas id="errorCanvas" width="360" height="130"></canvas>
+              </div>
+              <div class="readout">
+                <div class="readout__title">Control Effort</div>
+                <canvas id="effortCanvas" width="360" height="130"></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel glass">
+            <span class="eyebrow">Design Notes</span>
+            <p>
+              The true dynamics are integrated nonlinearly with quaternions, while the controller and estimator operate on a hover
+              linearization. That separation keeps the physics expressive while letting you feel how optimal control and state
+              estimation work in practice.
+            </p>
+            <ul class="feature-list">
+              <li>Rotor mixer with saturation and realized torque reconstruction</li>
+              <li>Live Q/R tuning for controller and filter behavior</li>
+              <li>Noisy sensor fusion for position, attitude, and angular-rate estimates</li>
+            </ul>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
+
