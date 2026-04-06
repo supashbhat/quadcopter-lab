@@ -22,6 +22,8 @@ cd quadcopter-lab
 
 Then open [http://localhost:4173](http://localhost:4173).
 
+You can also open [index.html](/Users/Supash/quadcopter-lab/index.html) directly from Finder now. The repo ships a bundled browser script alongside the source modules so the intro and UI do not get stuck behind `file://` module restrictions.
+
 ## Controls
 
 - `Reset`: restore the current scenario
