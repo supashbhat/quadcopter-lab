@@ -1867,7 +1867,7 @@ class DemoDirector {
         progress: "Ready",
         title: "Start the controls walkthrough",
         body:
-          "This guided run stages the exact sequence worth showing in a portfolio review: LQR recovery, disturbance rejection, PID comparison, then route tracking.",
+          "This guided run stages a clean comparison sequence: LQR recovery, disturbance rejection, PID baseline behavior, then route tracking.",
         button: "Start Demo",
         action: () => {
           paused = false;
@@ -1937,7 +1937,7 @@ class DemoDirector {
         progress: "4 / 4",
         title: "Finish with route tracking",
         body:
-          "The spiral route shows the same controller-estimator stack working beyond simple hover hold. Export the log afterward if you want a clean benchmark artifact for the repo.",
+          "The spiral route shows the same controller-estimator stack working beyond simple hover hold. Export the log afterward for offline plots or benchmark comparisons.",
         button: "Restart Demo",
         action: () => {
           this.index = -1;

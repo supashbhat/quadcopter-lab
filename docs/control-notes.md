@@ -30,12 +30,12 @@ The process and measurement covariance scales are exposed in the UI to make the 
 
 ## Controller comparison
 
-The lab now includes two control modes:
+The sandbox includes two control modes:
 
 - `LQR`: full-state feedback around hover linearization
 - `PID`: a practical baseline with position-to-attitude mapping and inner-loop rate damping
 
-The goal is not to claim that the PID mode is globally optimal. It exists to make the benefits of the LQR formulation more legible in the same environment and under the same disturbances.
+The `PID` mode is not presented as a substitute for model-based optimal control. It is included as a practical reference point so both strategies can be observed under the same dynamics, disturbances, and measurement noise.
 
 ## Interpreting the benchmark cards
 
@@ -46,7 +46,7 @@ The UI now exposes a compact recovery summary:
 - `Estimate RMS`: average gap between the Kalman estimate and the true simulated state
 - `Effort Peak`: largest control burst used during the recovery
 
-Those numbers are intentionally lightweight rather than academically exhaustive. The goal is to help a reviewer see, in a few seconds, whether one control mode is recovering more cleanly than another.
+Those numbers are intentionally lightweight rather than academically exhaustive. They are meant to provide a compact summary of recovery quality without forcing users to inspect raw traces first.
 
 ## Actuator realism
 

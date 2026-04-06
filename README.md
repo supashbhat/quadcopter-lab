@@ -1,21 +1,24 @@
 # Aerial Control Lab
 
-A polished quadcopter controls sandbox focused on nonlinear dynamics, LQR stabilization, and Kalman state estimation. The project is meant to make modern controls feel visual and tactile instead of hidden behind equations alone.
+Aerial Control Lab is an interactive quadcopter controls sandbox built to make modern control and estimation ideas easier to see, compare, and reason about. It combines a nonlinear 6-DOF rigid-body simulation with hover-state `LQR` control, a `PID` baseline, and a discrete `Kalman` filter inside a browser-based interface designed for experimentation.
 
-## What It Includes
+The project is aimed at the space between theory and intuition: changing gains, injecting disturbances, comparing controller behavior, and seeing how state estimation tracks a noisy plant in real time.
 
-- A nonlinear 6-DOF quadcopter simulation with quaternion attitude propagation
-- Hover-state linearization for LQR controller design
-- A discrete Kalman filter that fuses noisy GPS, attitude, and gyro measurements
-- Rotor mixing and saturation so control effort maps to four motor commands
-- Optional PID baseline so LQR behavior has a direct comparison mode
-- Motor spool lag and route playback so the plant feels less idealized
-- Wind gust injection, live telemetry, error/control histories, and target changes
+## Highlights
+
+- Nonlinear quadcopter dynamics with quaternion attitude propagation
+- Hover-state linearization for `LQR` feedback design
+- Discrete `Kalman` filter using noisy position, attitude, and rate measurements
+- `PID` comparison mode for side-by-side control intuition
+- Rotor mixing, saturation, and first-order motor spool dynamics
+- Disturbance injection, target switching, and route playback
 - Recovery benchmark cards for settling time, peak error, estimate RMS, and control effort
-- A guided comparison flow that walks through LQR recovery, disturbance rejection, PID baseline behavior, and route tracking
-- A blue-and-gold browser UI with polished motion and presentation
+- Guided walkthrough mode for controller comparison and route-tracking demos
+- JSON telemetry export for offline analysis
 
-## Quick Start
+## Getting Started
+
+Serve the project locally:
 
 ```bash
 cd quadcopter-lab
@@ -24,52 +27,67 @@ cd quadcopter-lab
 
 Then open [http://localhost:4173](http://localhost:4173).
 
-You can also open [index.html](/Users/Supash/quadcopter-lab/index.html) directly from Finder now. The repo ships a bundled browser script alongside the source modules so the intro and UI do not get stuck behind `file://` module restrictions.
+Direct file-open is also supported by opening `index.html` in a browser. The repository includes a bundled browser script so the interface can run outside a local module server when needed.
 
 ## Controls
 
-- `Reset`: restore the current scenario
-- `Wind Gust`: inject a side-force disturbance
-- `Target`: cycle among hover, offset, and climb setpoints
-- `Scenario`: switch the initial condition between hover recovery, crosswind, and offset approach
-- `Mode`: compare LQR against a tuned PID baseline
-- `Route`: switch among no route, box route, and spiral route playback
-- `Pause`: freeze the sim without dropping the UI
-- `Export Log`: download the recent telemetry history as JSON
-- Sliders: retune LQR state weight, control effort, Kalman trust, and wind strength live
-- `Guided Demo`: step through the intended portfolio narrative instead of manually guessing what to test
+- `Reset` resets the current scenario
+- `Wind Gust` injects a disturbance force
+- `Target` cycles between hover, offset, and climb setpoints
+- `Scenario` switches the initial condition
+- `Mode` toggles between `LQR` and `PID`
+- `Route` cycles between `Off`, `Box`, and `Spiral`
+- `Pause` freezes the simulation without clearing the UI
+- `Export Log` downloads recent telemetry as JSON
+- The slider panel adjusts control weighting, estimator trust, measurement noise, and wind strength
+- `Guided Demo` walks through the recommended comparison sequence
 
-## What To Learn From The Demo
+## What The Demo Shows
 
-- `LQR` uses a model of the hover dynamics and chooses feedback gains that minimize a cost balancing state error against control effort.
-- `PID` is the baseline: it reacts to present, accumulated, and rate-of-change error terms without using the full plant model.
-- `Kalman` is the estimator, not the controller. The gold ghost should stay fairly close to the blue true vehicle even when noise and wind are present.
-- The benchmark cards summarize the recovery story so the sandbox is easier to interpret at a glance.
+### LQR
 
-## Architecture
+`LQR` uses a linearized hover model and computes a feedback law that minimizes a cost balancing state error against control effort. In this sandbox it is meant to show how model-based optimal control can produce coordinated recovery behavior.
 
-- [index.html](/Users/Supash/quadcopter-lab/index.html) - shell and layout
-- [styles/main.css](/Users/Supash/quadcopter-lab/styles/main.css) - visual system and motion
-- [src/linalg.js](/Users/Supash/quadcopter-lab/src/linalg.js) - matrix helpers
-- [src/quaternion.js](/Users/Supash/quadcopter-lab/src/quaternion.js) - quaternion math and frame transforms
-- [src/control.js](/Users/Supash/quadcopter-lab/src/control.js) - hover model, LQR, and Kalman filter
-- [src/quadcopter.js](/Users/Supash/quadcopter-lab/src/quadcopter.js) - nonlinear dynamics, motor mixing, and simulation state
-- [src/renderer.js](/Users/Supash/quadcopter-lab/src/renderer.js) - 3D projection, telemetry, and charts
-- [src/app.js](/Users/Supash/quadcopter-lab/src/app.js) - orchestration and UI binding
-- [ROADMAP.md](/Users/Supash/quadcopter-lab/ROADMAP.md) - next milestones for control, benchmarking, and native-core work
+### PID
 
-## Why LQR + Kalman
+`PID` reacts to error directly through proportional, integral, and derivative terms. It is included as a practical baseline so the difference between local error correction and model-based control is easier to compare.
 
-LQR turns the stabilization problem into an optimization problem: penalize state error and control effort, then solve for the best linear feedback law around hover. The Kalman filter plays the complementary role on the sensing side, estimating the underlying state when measurements are noisy and incomplete.
+### Kalman Filtering
 
-That combination is useful well beyond quadcopters. It is the same broad control-estimation pattern that shows up in drones, vehicles, robotics, and instrument stabilization.
+The `Kalman` filter estimates the vehicle state from noisy measurements. The interface visualizes both the true vehicle state and the estimated state so estimator quality is visible rather than implicit.
 
-## What Changed In This Pass
+### Benchmark Cards
 
-- Added controller-mode switching so the same plant can be flown with `LQR` or `PID`
-- Added motor spool lag to make actuator response less artificially perfect
-- Added route playback beyond fixed targets
-- Added telemetry export for offline analysis
-- Added another telemetry chart for altitude and route progress
-- Added recovery benchmark cards and controller summaries for quicker interpretation
-- Added a guided demo flow that stages the most useful interactions in order
+The benchmark cards summarize the current run with:
+
+- `Settling Time`
+- `Peak Error`
+- `Estimate RMS`
+- `Effort Peak`
+
+These are lightweight comparison metrics, intended to make controller behavior easier to interpret at a glance.
+
+## Project Structure
+
+- `index.html` — interface shell and layout
+- `styles/main.css` — visual system, motion, and layout styling
+- `src/linalg.js` — matrix and vector helpers
+- `src/quaternion.js` — quaternion math and rotation utilities
+- `src/control.js` — hover linearization, `LQR`, and `Kalman` implementations
+- `src/quadcopter.js` — nonlinear dynamics, routing, disturbance logic, and simulation state
+- `src/renderer.js` — scene rendering, overlays, and chart drawing
+- `src/app.js` — UI orchestration and guided demo logic
+- `docs/control-notes.md` — control and estimator notes
+- `ROADMAP.md` — next steps for controls, analysis, and native-core work
+
+## Roadmap
+
+Near-term directions include:
+
+- richer `Q/R` tuning panels
+- batch scenario sweeps and replayable comparisons
+- estimator covariance visualization
+- stronger route-tracking and trajectory-following controllers
+- migration of the control/dynamics core into a native C++ library
+
+More detail is available in [ROADMAP.md](ROADMAP.md).
