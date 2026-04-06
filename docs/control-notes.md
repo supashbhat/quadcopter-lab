@@ -28,3 +28,15 @@ The filter fuses:
 
 The process and measurement covariance scales are exposed in the UI to make the estimator behavior tangible.
 
+## Controller comparison
+
+The lab now includes two control modes:
+
+- `LQR`: full-state feedback around hover linearization
+- `PID`: a practical baseline with position-to-attitude mapping and inner-loop rate damping
+
+The goal is not to claim that the PID mode is globally optimal. It exists to make the benefits of the LQR formulation more legible in the same environment and under the same disturbances.
+
+## Actuator realism
+
+Motor commands are no longer treated as instantaneously realized thrust. A first-order spool model smooths each rotor toward its commanded thrust, which makes aggressive corrections visibly less idealized and introduces a more realistic control-effort story.

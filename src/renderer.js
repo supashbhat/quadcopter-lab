@@ -1,7 +1,7 @@
 import { toEuler } from "./quaternion.js";
 
 export class Renderer {
-  constructor(sceneCanvas, motorCanvas, errorCanvas, effortCanvas) {
+  constructor(sceneCanvas, motorCanvas, errorCanvas, effortCanvas, altitudeCanvas) {
     this.sceneCanvas = sceneCanvas;
     this.scene = sceneCanvas.getContext("2d");
     this.motorCanvas = motorCanvas;
@@ -10,6 +10,8 @@ export class Renderer {
     this.error = errorCanvas.getContext("2d");
     this.effortCanvas = effortCanvas;
     this.effort = effortCanvas.getContext("2d");
+    this.altitudeCanvas = altitudeCanvas;
+    this.altitude = altitudeCanvas.getContext("2d");
     this.cameraAngle = 0.85;
   }
 
@@ -19,6 +21,7 @@ export class Renderer {
     drawBars(this.motor, this.motorCanvas, sim.motorLevels || [0, 0, 0, 0]);
     drawLineChart(this.error, this.errorCanvas, sim.histories.error, sim.histories.estimateGap, "#7fc8ff", "#f2c879");
     drawSingleChart(this.effort, this.effortCanvas, sim.histories.effort, "#d8ad63");
+    drawLineChart(this.altitude, this.altitudeCanvas, sim.altitudeHistory || [], sim.routeProgressHistory || [], "#9ed8ff", "#cda962");
   }
 }
 

@@ -8,6 +8,8 @@ A polished quadcopter controls sandbox focused on nonlinear dynamics, LQR stabil
 - Hover-state linearization for LQR controller design
 - A discrete Kalman filter that fuses noisy GPS, attitude, and gyro measurements
 - Rotor mixing and saturation so control effort maps to four motor commands
+- Optional PID baseline so LQR behavior has a direct comparison mode
+- Motor spool lag and route playback so the plant feels less idealized
 - Wind gust injection, live telemetry, error/control histories, and target changes
 - A blue-and-gold browser UI with polished motion and presentation
 
@@ -26,6 +28,10 @@ Then open [http://localhost:4173](http://localhost:4173).
 - `Wind Gust`: inject a side-force disturbance
 - `Target`: cycle among hover, offset, and climb setpoints
 - `Scenario`: switch the initial condition between hover recovery, crosswind, and offset approach
+- `Mode`: compare LQR against a tuned PID baseline
+- `Route`: switch among no route, box route, and spiral route playback
+- `Pause`: freeze the sim without dropping the UI
+- `Export Log`: download the recent telemetry history as JSON
 - Sliders: retune LQR state weight, control effort, Kalman trust, and wind strength live
 
 ## Architecture
@@ -38,6 +44,7 @@ Then open [http://localhost:4173](http://localhost:4173).
 - [src/quadcopter.js](/Users/Supash/quadcopter-lab/src/quadcopter.js) - nonlinear dynamics, motor mixing, and simulation state
 - [src/renderer.js](/Users/Supash/quadcopter-lab/src/renderer.js) - 3D projection, telemetry, and charts
 - [src/app.js](/Users/Supash/quadcopter-lab/src/app.js) - orchestration and UI binding
+- [ROADMAP.md](/Users/Supash/quadcopter-lab/ROADMAP.md) - next milestones for control, benchmarking, and native-core work
 
 ## Why LQR + Kalman
 
@@ -45,3 +52,10 @@ LQR turns the stabilization problem into an optimization problem: penalize state
 
 That combination is useful well beyond quadcopters. It is the same broad control-estimation pattern that shows up in drones, vehicles, robotics, and instrument stabilization.
 
+## What Changed In This Pass
+
+- Added controller-mode switching so the same plant can be flown with `LQR` or `PID`
+- Added motor spool lag to make actuator response less artificially perfect
+- Added route playback beyond fixed targets
+- Added telemetry export for offline analysis
+- Added another telemetry chart for altitude and route progress

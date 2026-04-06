@@ -15,17 +15,27 @@ const renderer = new Renderer(
   document.getElementById("motorCanvas"),
   document.getElementById("errorCanvas"),
   document.getElementById("effortCanvas"),
+  document.getElementById("altitudeCanvas"),
 );
 
 const statusLabel = document.getElementById("statusLabel");
+const statusDot = document.getElementById("statusDot");
 const positionError = document.getElementById("positionError");
 const attitudeError = document.getElementById("attitudeError");
 const windValue = document.getElementById("windValue");
 const settleValue = document.getElementById("settleValue");
+const controllerValue = document.getElementById("controllerValue");
+const routeValue = document.getElementById("routeValue");
 const resetButton = document.getElementById("resetButton");
 const gustButton = document.getElementById("gustButton");
 const targetButton = document.getElementById("targetButton");
 const scenarioButton = document.getElementById("scenarioButton");
+const modeButton = document.getElementById("modeButton");
+const routeButton = document.getElementById("routeButton");
+const pauseButton = document.getElementById("pauseButton");
+const exportButton = document.getElementById("exportButton");
+
+let paused = false;
 
 buildSliders();
 wireButtons();
@@ -37,7 +47,9 @@ requestAnimationFrame(frame);
 function frame(now) {
   const dt = Math.min(0.035, (now - last) / 1000 || 1 / 60);
   last = now;
-  sim.step(dt);
+  if (!paused) {
+    sim.step(dt);
+  }
   renderer.render(sim, dt);
   syncText();
   requestAnimationFrame(frame);
@@ -89,14 +101,34 @@ function wireButtons() {
     sim.cycleScenario();
     scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
   });
+  modeButton.addEventListener("click", () => {
+    sim.toggleControllerMode();
+    modeButton.textContent = `Mode: ${sim.controllerMode}`;
+  });
+  routeButton.addEventListener("click", () => {
+    sim.cycleRoute();
+    routeButton.textContent = `Route: ${sim.routeName}`;
+  });
+  pauseButton.addEventListener("click", () => {
+    paused = !paused;
+    pauseButton.textContent = paused ? "Resume" : "Pause";
+  });
+  exportButton.addEventListener("click", exportTelemetry);
 }
 
 function syncText() {
   positionError.textContent = `${sim.metrics.positionError.toFixed(2)} m`;
   attitudeError.textContent = `${sim.metrics.attitudeError.toFixed(1)} deg`;
   windValue.textContent = `${sim.metrics.windForce.toFixed(2)} N`;
-  settleValue.textContent = sim.metrics.positionError < 0.45 ? "Near hover" : "Recovering";
-  statusLabel.textContent = sim.metrics.positionError < 0.45 ? "Stable hold" : "Stabilizing";
+  settleValue.textContent = paused ? "Paused" : sim.metrics.positionError < 0.45 ? "Near hover" : "Recovering";
+  statusLabel.textContent = paused ? "Paused" : sim.metrics.positionError < 0.45 ? "Stable hold" : "Stabilizing";
+  statusDot.style.background = paused
+    ? "radial-gradient(circle, #e9f5ff, #7fc8ff)"
+    : sim.metrics.positionError < 0.45
+      ? "radial-gradient(circle, #fff2ca, #f2c879)"
+      : "radial-gradient(circle, #ffd8cb, #ff9a7a)";
+  controllerValue.textContent = sim.controllerMode;
+  routeValue.textContent = sim.routeName;
 }
 
 function kickIntro() {
@@ -105,3 +137,13 @@ function kickIntro() {
   setTimeout(() => intro.remove(), 4100);
 }
 
+function exportTelemetry() {
+  const payload = sim.exportLog();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `aerial-control-lab-${Date.now()}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

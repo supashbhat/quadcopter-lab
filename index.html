@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aerial Control Lab</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
@@ -69,6 +70,10 @@
               <button class="button" id="gustButton">Wind Gust</button>
               <button class="button" id="targetButton">Target: Hover</button>
               <button class="button" id="scenarioButton">Scenario: Recover</button>
+              <button class="button" id="modeButton">Mode: LQR</button>
+              <button class="button" id="routeButton">Route: Off</button>
+              <button class="button" id="pauseButton">Pause</button>
+              <button class="button" id="exportButton">Export Log</button>
             </div>
             <div class="slider-stack" id="sliderStack"></div>
           </section>
@@ -92,6 +97,14 @@
                 <span class="metric__label">Settling Hint</span>
                 <strong id="settleValue">Recovering</strong>
               </div>
+              <div class="metric">
+                <span class="metric__label">Controller</span>
+                <strong id="controllerValue">LQR</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Route Mode</span>
+                <strong id="routeValue">Off</strong>
+              </div>
             </div>
             <div class="readouts">
               <div class="readout">
@@ -106,6 +119,10 @@
                 <div class="readout__title">Control Effort</div>
                 <canvas id="effortCanvas" width="360" height="130"></canvas>
               </div>
+              <div class="readout">
+                <div class="readout__title">Altitude / Route Progress</div>
+                <canvas id="altitudeCanvas" width="360" height="130"></canvas>
+              </div>
             </div>
           </section>
 
@@ -118,9 +135,18 @@
             </p>
             <ul class="feature-list">
               <li>Rotor mixer with saturation and realized torque reconstruction</li>
+              <li>Optional PID baseline for side-by-side controller feel</li>
+              <li>Motor spool lag and route playback for less toy-like behavior</li>
               <li>Live Q/R tuning for controller and filter behavior</li>
               <li>Noisy sensor fusion for position, attitude, and angular-rate estimates</li>
             </ul>
+            <div class="help-callout">
+              <div class="help-callout__title">What to try</div>
+              <p>
+                Toggle between LQR and PID, switch on a route, then hit a wind gust. Export the run after recovery to compare
+                the control story outside the browser.
+              </p>
+            </div>
           </section>
         </aside>
       </main>
@@ -129,4 +155,3 @@
     <script type="module" src="./src/app.js"></script>
   </body>
 </html>
-

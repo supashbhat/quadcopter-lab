@@ -43,6 +43,32 @@ const TARGETS = [
   { name: "Climb", position: [-2.6, 2.3, 3.6], yaw: -0.2 },
 ];
 
+const ROUTES = [
+  { name: "Off", points: [] },
+  {
+    name: "Box",
+    points: [
+      { position: [0, 0, 2.2], yaw: 0 },
+      { position: [2.4, 0.6, 2.5], yaw: 0.12 },
+      { position: [2.6, -2.4, 2.6], yaw: 0.25 },
+      { position: [-0.4, -2.8, 2.3], yaw: -0.18 },
+      { position: [0, 0, 2.2], yaw: 0 },
+    ],
+  },
+  {
+    name: "Spiral",
+    points: [
+      { position: [0, 0, 2.0], yaw: 0 },
+      { position: [1.2, 1.0, 2.4], yaw: 0.16 },
+      { position: [2.4, 0.2, 2.8], yaw: 0.3 },
+      { position: [2.2, -1.8, 3.2], yaw: 0.42 },
+      { position: [0.4, -2.6, 3.5], yaw: 0.56 },
+      { position: [-1.8, -1.2, 3.0], yaw: 0.24 },
+      { position: [0, 0, 2.2], yaw: 0 },
+    ],
+  },
+];
+
 export class QuadcopterLab {
   constructor() {
     this.params = { ...DEFAULT_PARAMS };
@@ -55,6 +81,13 @@ export class QuadcopterLab {
       measurementNoise: 1.0,
       windScale: 1.0,
     };
+    this.controllerMode = "LQR";
+    this.routeIndex = 0;
+    this.routeTime = 0;
+    this.simTime = 0;
+    this.altitudeHistory = [];
+    this.routeProgressHistory = [];
+    this.log = [];
 
     this.histories = {
       error: [],
@@ -73,9 +106,16 @@ export class QuadcopterLab {
     this.mixInverse = inverse(this.mixMatrix);
     this.model = buildHoverModel(this.params, 1 / 60);
     this.controller = null;
+    this.pidState = {
+      positionIntegral: [0, 0, 0],
+      attitudeIntegral: [0, 0, 0],
+      lastPositionError: [0, 0, 0],
+      lastAttitudeError: [0, 0, 0],
+    };
     this.filter = null;
     this.lastCommand = [this.params.mass * this.params.gravity, 0, 0, 0];
     this.windImpulse = [0, 0, 0];
+    this.motorState = [0, 0, 0, 0];
     this.setScenario(0);
     this.setTarget(0);
     this.updateTuning(this.tuning);
@@ -106,6 +146,16 @@ export class QuadcopterLab {
     this.histories.estimateGap = [];
     this.histories.trueTrace = [];
     this.histories.estimatedTrace = [];
+    this.altitudeHistory = [];
+    this.routeProgressHistory = [];
+    this.log = [];
+    this.pidState.positionIntegral = [0, 0, 0];
+    this.pidState.attitudeIntegral = [0, 0, 0];
+    this.pidState.lastPositionError = [0, 0, 0];
+    this.pidState.lastAttitudeError = [0, 0, 0];
+    this.motorState = [0, 0, 0, 0];
+    this.routeTime = 0;
+    this.simTime = 0;
     if (this.filter) {
       this.filter.state = this.makeLinearStateFromTrue();
     }
@@ -139,7 +189,21 @@ export class QuadcopterLab {
     this.setTarget(this.targetIndex);
   }
 
+  toggleControllerMode() {
+    this.controllerMode = this.controllerMode === "LQR" ? "PID" : "LQR";
+  }
+
+  cycleRoute() {
+    this.routeIndex = (this.routeIndex + 1) % ROUTES.length;
+    this.routeTime = 0;
+    if (this.routeIndex === 0) {
+      this.setTarget(this.targetIndex);
+    }
+  }
+
   step(dt) {
+    this.simTime += dt;
+    this.advanceRoute(dt);
     const measurement = this.makeMeasurement();
     this.filter.predict(this.lastCommand.map((value, index) => index === 0 ? value - this.params.mass * this.params.gravity : value));
     this.filter.update(measurement);
@@ -155,14 +219,10 @@ export class QuadcopterLab {
     ];
 
     const error = subVectors(estimate, desired);
-    const correction = mulMatrixVector(this.controller, error).map((value) => -value);
-    const rawCommand = [
-      this.params.mass * this.params.gravity + correction[0],
-      correction[1],
-      correction[2],
-      correction[3],
-    ];
-    const allocation = this.allocateMotors(rawCommand);
+    const rawCommand = this.controllerMode === "LQR"
+      ? this.computeLqrCommand(error)
+      : this.computePidCommand(estimate, desired, dt);
+    const allocation = this.allocateMotors(rawCommand, dt);
     this.lastCommand = [allocation.totalThrust, allocation.torque[0], allocation.torque[1], allocation.torque[2]];
 
     this.trueState = integrateState(this.trueState, this.lastCommand, dt, this.params, this.windImpulse);
@@ -183,6 +243,8 @@ export class QuadcopterLab {
     pushHistory(this.histories.effort, effortNorm);
     pushTrace(this.histories.trueTrace, [...this.trueState.position]);
     pushTrace(this.histories.estimatedTrace, estimate.slice(0, 3));
+    pushHistory(this.altitudeHistory, this.trueState.position[2]);
+    pushHistory(this.routeProgressHistory, this.getRouteProgress());
 
     this.motorLevels = allocation.motors.map((value) => value / this.params.thrustLimit);
     this.metrics = {
@@ -192,6 +254,20 @@ export class QuadcopterLab {
       estimateGap,
       effortNorm,
     };
+    this.log.push({
+      time: Number(this.simTime.toFixed(3)),
+      mode: this.controllerMode,
+      route: this.routeName,
+      positionError: Number(this.metrics.positionError.toFixed(4)),
+      attitudeError: Number(this.metrics.attitudeError.toFixed(4)),
+      estimateGap: Number(estimateGap.toFixed(4)),
+      effort: Number(effortNorm.toFixed(4)),
+      target: [...this.target.position],
+      position: [...this.trueState.position],
+    });
+    if (this.log.length > 720) {
+      this.log.shift();
+    }
   }
 
   makeMeasurement() {
@@ -239,15 +315,17 @@ export class QuadcopterLab {
     ];
   }
 
-  allocateMotors(command) {
+  allocateMotors(command, dt) {
     const desiredMotors = mulMatrixVector(this.mixInverse, command).map((value) => clamp(value, 0, this.params.thrustLimit));
-    const totalThrust = desiredMotors.reduce((sum, value) => sum + value, 0);
+    const spoolRate = 1 - Math.exp(-dt / 0.18);
+    this.motorState = this.motorState.map((value, index) => value + (desiredMotors[index] - value) * spoolRate);
+    const totalThrust = this.motorState.reduce((sum, value) => sum + value, 0);
     const torque = [
-      this.params.armLength * (desiredMotors[1] - desiredMotors[3]),
-      this.params.armLength * (desiredMotors[2] - desiredMotors[0]),
-      this.params.yawCoefficient * (-desiredMotors[0] + desiredMotors[1] - desiredMotors[2] + desiredMotors[3]),
+      this.params.armLength * (this.motorState[1] - this.motorState[3]),
+      this.params.armLength * (this.motorState[2] - this.motorState[0]),
+      this.params.yawCoefficient * (-this.motorState[0] + this.motorState[1] - this.motorState[2] + this.motorState[3]),
     ];
-    return { motors: desiredMotors, totalThrust, torque };
+    return { motors: [...this.motorState], desiredMotors, totalThrust, torque };
   }
 
   get sceneName() {
@@ -258,12 +336,136 @@ export class QuadcopterLab {
     return TARGETS[this.targetIndex].name;
   }
 
+  get routeName() {
+    return ROUTES[this.routeIndex].name;
+  }
+
   getEstimatedPose() {
     const estimate = this.filter.state;
     return {
       position: estimate.slice(0, 3),
       quaternion: fromEuler(estimate[6], estimate[7], estimate[8]),
     };
+  }
+
+  exportLog() {
+    return {
+      controllerMode: this.controllerMode,
+      scenario: this.sceneName,
+      route: this.routeName,
+      target: this.targetName,
+      tuning: { ...this.tuning },
+      samples: [...this.log],
+    };
+  }
+
+  getRouteProgress() {
+    if (this.routeIndex === 0) {
+      return 0;
+    }
+    const route = ROUTES[this.routeIndex];
+    const segmentCount = Math.max(1, route.points.length - 1);
+    const cycle = this.routeTime % segmentCount;
+    return cycle / segmentCount;
+  }
+
+  advanceRoute(dt) {
+    if (this.routeIndex === 0) {
+      return;
+    }
+
+    const route = ROUTES[this.routeIndex];
+    const points = route.points;
+    if (points.length < 2) {
+      return;
+    }
+
+    this.routeTime += dt * 0.32;
+    const segmentCount = points.length - 1;
+    const loopTime = this.routeTime % segmentCount;
+    const segmentIndex = Math.floor(loopTime);
+    const t = loopTime - segmentIndex;
+    const a = points[segmentIndex];
+    const b = points[(segmentIndex + 1) % points.length];
+
+    this.target = {
+      name: route.name,
+      position: lerpVec(a.position, b.position, smoothstep(t)),
+      yaw: a.yaw + (b.yaw - a.yaw) * smoothstep(t),
+    };
+  }
+
+  computeLqrCommand(error) {
+    const correction = mulMatrixVector(this.controller, error).map((value) => -value);
+    return [
+      this.params.mass * this.params.gravity + correction[0],
+      correction[1],
+      correction[2],
+      correction[3],
+    ];
+  }
+
+  computePidCommand(estimate, desired, dt) {
+    const positionError = [
+      desired[0] - estimate[0],
+      desired[1] - estimate[1],
+      desired[2] - estimate[2],
+    ];
+    const velocityError = [
+      desired[3] - estimate[3],
+      desired[4] - estimate[4],
+      desired[5] - estimate[5],
+    ];
+    const attitudeError = [
+      desired[6] - estimate[6],
+      desired[7] - estimate[7],
+      desired[8] - estimate[8],
+    ];
+    const rateError = [
+      desired[9] - estimate[9],
+      desired[10] - estimate[10],
+      desired[11] - estimate[11],
+    ];
+
+    this.pidState.positionIntegral = this.pidState.positionIntegral.map((value, index) =>
+      clamp(value + positionError[index] * dt, -1.2, 1.2));
+    this.pidState.attitudeIntegral = this.pidState.attitudeIntegral.map((value, index) =>
+      clamp(value + attitudeError[index] * dt, -0.8, 0.8));
+
+    const kpPos = [0.85, 0.85, 2.6];
+    const kdPos = [0.52, 0.52, 1.5];
+    const kiPos = [0.03, 0.03, 0.28];
+    const kpAtt = [0.75, 0.75, 0.44];
+    const kdAtt = [0.24, 0.24, 0.18];
+    const kiAtt = [0.02, 0.02, 0.02];
+
+    const desiredPitch = clamp(
+      kpPos[0] * positionError[0] + kdPos[0] * velocityError[0] + kiPos[0] * this.pidState.positionIntegral[0],
+      -0.32,
+      0.32,
+    );
+    const desiredRoll = clamp(
+      -(kpPos[1] * positionError[1] + kdPos[1] * velocityError[1] + kiPos[1] * this.pidState.positionIntegral[1]),
+      -0.32,
+      0.32,
+    );
+    const thrust = this.params.mass * this.params.gravity
+      + kpPos[2] * positionError[2]
+      + kdPos[2] * velocityError[2]
+      + kiPos[2] * this.pidState.positionIntegral[2];
+
+    const rollError = desiredRoll - estimate[6];
+    const pitchError = desiredPitch - estimate[7];
+    const yawError = desired[8] - estimate[8];
+
+    const tauX = kpAtt[0] * rollError + kdAtt[0] * rateError[0] + kiAtt[0] * this.pidState.attitudeIntegral[0];
+    const tauY = kpAtt[1] * pitchError + kdAtt[1] * rateError[1] + kiAtt[1] * this.pidState.attitudeIntegral[1];
+    const tauZ = kpAtt[2] * yawError + kdAtt[2] * rateError[2] + kiAtt[2] * this.pidState.attitudeIntegral[2];
+
+    this.pidState.lastPositionError = positionError;
+    this.pidState.lastAttitudeError = attitudeError;
+
+    return [thrust, tauX, tauY, tauZ];
   }
 }
 
@@ -368,4 +570,12 @@ function clamp(value, min, max) {
 
 function radToDeg(value) {
   return (value * 180) / Math.PI;
+}
+
+function lerpVec(a, b, t) {
+  return a.map((value, index) => value + (b[index] - value) * t);
+}
+
+function smoothstep(t) {
+  return t * t * (3 - 2 * t);
 }

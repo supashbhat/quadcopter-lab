@@ -464,6 +464,26 @@ body {
   margin-top: 8px;
 }
 
+.help-callout {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(8, 16, 26, 0.74);
+  border: 1px solid rgba(118, 159, 215, 0.12);
+}
+
+.help-callout__title {
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.help-callout p {
+  margin-top: 10px;
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
@@ -503,4 +523,3 @@ body {
     order: 2;
   }
 }
-

@@ -3,16 +3,16 @@
 ## Current foundation
 
 - Nonlinear rigid-body quadcopter dynamics with quaternion attitude
-- Hover-state LQR controller
+- Hover-state LQR controller plus PID comparison mode
 - Discrete Kalman filter with noisy sensor fusion
+- Motor spool dynamics, route playback, telemetry export
 - Blue-gold browser visualization with telemetry and scenario controls
 
 ## Next control upgrades
 
-- Add waypoint interpolation instead of discrete target presets
-- Add actuator lag and motor spool dynamics
 - Expose full Q/R matrices through advanced tuning panels
-- Compare hover LQR against a baseline PID controller
+- Add nonlinear trajectory-tracking beyond hover linearization
+- Add integral LQR / LQI variant for offset rejection comparison
 
 ## Next analysis upgrades
 
