@@ -11,6 +11,8 @@ A polished quadcopter controls sandbox focused on nonlinear dynamics, LQR stabil
 - Optional PID baseline so LQR behavior has a direct comparison mode
 - Motor spool lag and route playback so the plant feels less idealized
 - Wind gust injection, live telemetry, error/control histories, and target changes
+- Recovery benchmark cards for settling time, peak error, estimate RMS, and control effort
+- A guided comparison flow that walks through LQR recovery, disturbance rejection, PID baseline behavior, and route tracking
 - A blue-and-gold browser UI with polished motion and presentation
 
 ## Quick Start
@@ -35,6 +37,14 @@ You can also open [index.html](/Users/Supash/quadcopter-lab/index.html) directly
 - `Pause`: freeze the sim without dropping the UI
 - `Export Log`: download the recent telemetry history as JSON
 - Sliders: retune LQR state weight, control effort, Kalman trust, and wind strength live
+- `Guided Demo`: step through the intended portfolio narrative instead of manually guessing what to test
+
+## What To Learn From The Demo
+
+- `LQR` uses a model of the hover dynamics and chooses feedback gains that minimize a cost balancing state error against control effort.
+- `PID` is the baseline: it reacts to present, accumulated, and rate-of-change error terms without using the full plant model.
+- `Kalman` is the estimator, not the controller. The gold ghost should stay fairly close to the blue true vehicle even when noise and wind are present.
+- The benchmark cards summarize the recovery story so the sandbox is easier to interpret at a glance.
 
 ## Architecture
 
@@ -61,3 +71,5 @@ That combination is useful well beyond quadcopters. It is the same broad control
 - Added route playback beyond fixed targets
 - Added telemetry export for offline analysis
 - Added another telemetry chart for altitude and route progress
+- Added recovery benchmark cards and controller summaries for quicker interpretation
+- Added a guided demo flow that stages the most useful interactions in order

@@ -62,70 +62,90 @@ function drawScene(ctx, canvas, sim, cameraAngle) {
     ctx.stroke();
   });
 
+  drawReferenceAxes(ctx, width, height, cameraAngle);
   drawTarget(ctx, sim.target.position, width, height, cameraAngle);
   drawTrace(ctx, sim.histories.trueTrace || [], width, height, cameraAngle, "rgba(127, 200, 255, 0.35)");
   drawTrace(ctx, sim.histories.estimatedTrace || [], width, height, cameraAngle, "rgba(242, 200, 121, 0.3)");
   drawDrone(ctx, sim.trueState, width, height, cameraAngle, false);
   drawDrone(ctx, sim.getEstimatedPose(), width, height, cameraAngle, true);
+  drawFocusMarker(ctx, sim.trueState.position, width, height, cameraAngle);
+  drawInsetTopDown(ctx, sim, width, height);
+  drawInsetElevation(ctx, sim, width, height);
   drawTelemetryOverlay(ctx, sim, width, height);
 }
 
 function drawDrone(ctx, state, width, height, cameraAngle, ghost) {
   const center = state.position;
   const rotorLocal = [
-    [0.24, 0, 0],
-    [0, 0.24, 0],
-    [-0.24, 0, 0],
-    [0, -0.24, 0],
+    [0.52, 0, 0],
+    [0, 0.52, 0],
+    [-0.52, 0, 0],
+    [0, -0.52, 0],
   ];
   const points = rotorLocal.map((point) => addVectors(center, rotateByEuler(point, toEuler(state.quaternion))));
   const center2d = project(center, width, height, cameraAngle);
 
   ctx.strokeStyle = ghost ? "rgba(242, 200, 121, 0.48)" : "rgba(127, 200, 255, 0.92)";
-  ctx.lineWidth = ghost ? 2 : 3.2;
+  ctx.lineWidth = ghost ? 2.8 : 4.6;
+  const p0 = project(points[0], width, height, cameraAngle);
+  const p1 = project(points[1], width, height, cameraAngle);
+  const p2 = project(points[2], width, height, cameraAngle);
+  const p3 = project(points[3], width, height, cameraAngle);
   ctx.beginPath();
-  ctx.moveTo(project(points[0], width, height, cameraAngle).x, project(points[0], width, height, cameraAngle).y);
-  ctx.lineTo(project(points[2], width, height, cameraAngle).x, project(points[2], width, height, cameraAngle).y);
-  ctx.moveTo(project(points[1], width, height, cameraAngle).x, project(points[1], width, height, cameraAngle).y);
-  ctx.lineTo(project(points[3], width, height, cameraAngle).x, project(points[3], width, height, cameraAngle).y);
+  ctx.moveTo(p0.x, p0.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p3.x, p3.y);
   ctx.stroke();
+
+  if (!ghost) {
+    ctx.strokeStyle = "rgba(236, 245, 255, 0.72)";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(center2d.x, center2d.y);
+    ctx.lineTo((p0.x + p1.x) * 0.5, (p0.y + p1.y) * 0.5);
+    ctx.stroke();
+  }
 
   points.forEach((point, index) => {
     const rotor = project(point, width, height, cameraAngle);
     ctx.beginPath();
     ctx.strokeStyle = ghost ? "rgba(242, 200, 121, 0.32)" : "rgba(242, 200, 121, 0.9)";
-    ctx.lineWidth = 2;
-    ctx.arc(rotor.x, rotor.y, ghost ? 12 : 15, 0, Math.PI * 2);
+    ctx.lineWidth = 2.2;
+    ctx.arc(rotor.x, rotor.y, ghost ? 14 : 18, 0, Math.PI * 2);
     ctx.stroke();
 
     if (!ghost) {
       const shimmer = 0.55 + 0.45 * Math.sin(performance.now() * 0.012 + index * 1.7);
       ctx.fillStyle = `rgba(242, 200, 121, ${0.18 * shimmer})`;
       ctx.beginPath();
-      ctx.arc(rotor.x, rotor.y, 20 + shimmer * 6, 0, Math.PI * 2);
+      ctx.arc(rotor.x, rotor.y, 26 + shimmer * 8, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
   ctx.fillStyle = ghost ? "rgba(242, 200, 121, 0.66)" : "#ecf5ff";
   ctx.beginPath();
-  ctx.arc(center2d.x, center2d.y, ghost ? 6 : 8, 0, Math.PI * 2);
+  ctx.arc(center2d.x, center2d.y, ghost ? 7 : 10, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function drawTarget(ctx, target, width, height, cameraAngle) {
   const point = project(target, width, height, cameraAngle);
   ctx.strokeStyle = "rgba(242, 200, 121, 0.86)";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.8;
   ctx.beginPath();
-  ctx.arc(point.x, point.y, 18, 0, Math.PI * 2);
+  ctx.arc(point.x, point.y, 24, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(point.x - 24, point.y);
-  ctx.lineTo(point.x + 24, point.y);
-  ctx.moveTo(point.x, point.y - 24);
-  ctx.lineTo(point.x, point.y + 24);
+  ctx.moveTo(point.x - 32, point.y);
+  ctx.lineTo(point.x + 32, point.y);
+  ctx.moveTo(point.x, point.y - 32);
+  ctx.lineTo(point.x, point.y + 32);
   ctx.stroke();
+  ctx.fillStyle = "rgba(242, 200, 121, 0.92)";
+  ctx.font = "600 12px Inter, sans-serif";
+  ctx.fillText("Target", point.x + 16, point.y - 14);
 }
 
 function drawTelemetryOverlay(ctx, sim, width, height) {
@@ -146,13 +166,120 @@ function drawTelemetryOverlay(ctx, sim, width, height) {
   lines.forEach((line, index) => ctx.fillText(line, width - 252, height - 100 + index * 22));
 }
 
+function drawInsetTopDown(ctx, sim, width, height) {
+  const x = width - 270;
+  const y = 28;
+  const w = 230;
+  const h = 170;
+  drawInsetPanel(ctx, x, y, w, h, "Top View");
+
+  const scale = 24;
+  const centerX = x + w / 2;
+  const centerY = y + h / 2 + 12;
+
+  drawInsetGrid(ctx, x, y, w, h);
+
+  const target = sim.target.position;
+  const truePos = sim.trueState.position;
+  const estimatedPos = sim.getEstimatedPose().position;
+
+  drawInsetReticle(ctx, centerX + target[0] * scale, centerY - target[1] * scale, "rgba(242, 200, 121, 0.95)");
+  drawInsetPoint(ctx, centerX + truePos[0] * scale, centerY - truePos[1] * scale, 8, "#9ed8ff");
+  drawInsetPoint(ctx, centerX + estimatedPos[0] * scale, centerY - estimatedPos[1] * scale, 6, "#f2c879");
+  drawInsetLabel(ctx, x + 16, y + h - 18, "x/y plane");
+}
+
+function drawInsetElevation(ctx, sim, width, height) {
+  const x = 28;
+  const y = height - 198;
+  const w = 250;
+  const h = 150;
+  drawInsetPanel(ctx, x, y, w, h, "Elevation");
+
+  const scaleX = 22;
+  const scaleZ = 24;
+  const centerX = x + 46;
+  const baselineY = y + h - 32;
+
+  ctx.strokeStyle = "rgba(122, 164, 219, 0.22)";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x + 16, baselineY);
+  ctx.lineTo(x + w - 16, baselineY);
+  ctx.stroke();
+
+  const target = sim.target.position;
+  const truePos = sim.trueState.position;
+  const estimatedPos = sim.getEstimatedPose().position;
+
+  drawInsetReticle(ctx, centerX + target[0] * scaleX, baselineY - target[2] * scaleZ, "rgba(242, 200, 121, 0.95)");
+  drawInsetPoint(ctx, centerX + truePos[0] * scaleX, baselineY - truePos[2] * scaleZ, 8, "#9ed8ff");
+  drawInsetPoint(ctx, centerX + estimatedPos[0] * scaleX, baselineY - estimatedPos[2] * scaleZ, 6, "#f2c879");
+  drawInsetLabel(ctx, x + 16, y + h - 12, "x/z plane");
+}
+
+function drawInsetPanel(ctx, x, y, w, h, title) {
+  ctx.fillStyle = "rgba(7, 15, 24, 0.84)";
+  ctx.strokeStyle = "rgba(120, 165, 222, 0.18)";
+  roundRect(ctx, x, y, w, h, 18, true, true);
+  ctx.fillStyle = "rgba(237, 245, 255, 0.92)";
+  ctx.font = "600 13px Inter, sans-serif";
+  ctx.fillText(title, x + 16, y + 24);
+}
+
+function drawInsetGrid(ctx, x, y, w, h) {
+  ctx.strokeStyle = "rgba(120, 165, 222, 0.1)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i += 1) {
+    const xx = x + (w / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(xx, y + 34);
+    ctx.lineTo(xx, y + h - 16);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 4; i += 1) {
+    const yy = y + 30 + ((h - 50) / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(x + 16, yy);
+    ctx.lineTo(x + w - 16, yy);
+    ctx.stroke();
+  }
+}
+
+function drawInsetReticle(ctx, x, y, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 16, y);
+  ctx.lineTo(x + 16, y);
+  ctx.moveTo(x, y - 16);
+  ctx.lineTo(x, y + 16);
+  ctx.stroke();
+}
+
+function drawInsetPoint(ctx, x, y, radius, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawInsetLabel(ctx, x, y, text) {
+  ctx.fillStyle = "rgba(170, 188, 208, 0.84)";
+  ctx.font = "500 12px Inter, sans-serif";
+  ctx.fillText(text, x, y);
+}
+
 function drawTrace(ctx, trace, width, height, cameraAngle, color) {
   if (trace.length < 2) {
     return;
   }
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.6;
   ctx.beginPath();
   trace.forEach((point, index) => {
     const projected = project(point, width, height, cameraAngle);
@@ -162,6 +289,51 @@ function drawTrace(ctx, trace, width, height, cameraAngle, color) {
       ctx.lineTo(projected.x, projected.y);
     }
   });
+  ctx.stroke();
+}
+
+function drawReferenceAxes(ctx, width, height, cameraAngle) {
+  const origin = project([0, 0, 0], width, height, cameraAngle);
+  const xAxis = project([2.8, 0, 0], width, height, cameraAngle);
+  const yAxis = project([0, 2.8, 0], width, height, cameraAngle);
+  const zAxis = project([0, 0, 2.8], width, height, cameraAngle);
+
+  ctx.lineWidth = 2.2;
+
+  ctx.strokeStyle = "rgba(127, 200, 255, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(xAxis.x, xAxis.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(242, 200, 121, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(yAxis.x, yAxis.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(199, 236, 255, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(zAxis.x, zAxis.y);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(227, 238, 250, 0.9)";
+  ctx.font = "600 12px Inter, sans-serif";
+  ctx.fillText("X", xAxis.x + 6, xAxis.y);
+  ctx.fillText("Y", yAxis.x + 6, yAxis.y);
+  ctx.fillText("Z", zAxis.x + 6, zAxis.y);
+}
+
+function drawFocusMarker(ctx, position, width, height, cameraAngle) {
+  const p = project(position, width, height, cameraAngle);
+  ctx.strokeStyle = "rgba(127, 200, 255, 0.16)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 48, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 78, 0, Math.PI * 2);
   ctx.stroke();
 }
 
@@ -232,8 +404,8 @@ function fillPanel(ctx, width, height) {
 }
 
 function project(point, width, height, cameraAngle) {
-  const cameraDistance = 10.5;
-  const elevated = 4.8;
+  const cameraDistance = 12.5;
+  const elevated = 1.5;
   const cos = Math.cos(cameraAngle);
   const sin = Math.sin(cameraAngle);
 
@@ -242,10 +414,10 @@ function project(point, width, height, cameraAngle) {
   const z = point[2];
 
   const depth = cameraDistance + y;
-  const scale = 520 / depth;
+  const scale = 760 / depth;
   return {
-    x: width * 0.5 + x * scale,
-    y: height * 0.72 - (z - elevated) * scale,
+    x: width * 0.46 + x * scale,
+    y: height * 0.54 - (z - elevated) * scale,
   };
 }
 

@@ -193,12 +193,22 @@ export class QuadcopterLab {
     this.controllerMode = this.controllerMode === "LQR" ? "PID" : "LQR";
   }
 
-  cycleRoute() {
-    this.routeIndex = (this.routeIndex + 1) % ROUTES.length;
+  setControllerMode(mode) {
+    if (mode === "LQR" || mode === "PID") {
+      this.controllerMode = mode;
+    }
+  }
+
+  setRoute(index) {
+    this.routeIndex = (index + ROUTES.length) % ROUTES.length;
     this.routeTime = 0;
     if (this.routeIndex === 0) {
       this.setTarget(this.targetIndex);
     }
+  }
+
+  cycleRoute() {
+    this.setRoute(this.routeIndex + 1);
   }
 
   step(dt) {

@@ -22,6 +22,8 @@
       </div>
     </div>
 
+    <div class="boot-banner" id="bootBanner" hidden></div>
+
     <div class="page-shell">
       <div class="ambient ambient--left"></div>
       <div class="ambient ambient--right"></div>
@@ -53,6 +55,9 @@
             <div>
               <span class="eyebrow">Simulation View</span>
               <h2>Hover Recovery With Live Estimation</h2>
+              <p class="viewport__hint">
+                Blue frame = true vehicle, gold ghost = estimated state, gold reticle = target. Insets show top-down and elevation views.
+              </p>
             </div>
             <div class="status">
               <span class="status__dot" id="statusDot"></span>
@@ -62,8 +67,8 @@
           <canvas id="sceneCanvas" width="1240" height="760"></canvas>
         </section>
 
-        <aside class="sidebar">
-          <section class="panel glass">
+        <section class="dock">
+          <section class="panel glass dock__controls">
             <span class="eyebrow">Control Deck</span>
             <div class="control-grid">
               <button class="button button--primary" id="resetButton">Reset</button>
@@ -78,7 +83,7 @@
             <div class="slider-stack" id="sliderStack"></div>
           </section>
 
-          <section class="panel glass">
+          <section class="panel glass dock__telemetry">
             <span class="eyebrow">Telemetry</span>
             <div class="telemetry-grid">
               <div class="metric">
@@ -106,6 +111,38 @@
                 <strong id="routeValue">Off</strong>
               </div>
             </div>
+            <div class="benchmark-strip">
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Settling Time</span>
+                <strong class="benchmark-card__value" id="settlingTimeValue">Tracking...</strong>
+                <p>How long it took this recovery window to get back inside the hover band.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Peak Error</span>
+                <strong class="benchmark-card__value" id="peakErrorValue">0.00 m</strong>
+                <p>Largest position miss during the current recovery or route segment.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Estimate RMS</span>
+                <strong class="benchmark-card__value" id="estimateRmsValue">0.00 m</strong>
+                <p>Average gap between the true vehicle and the Kalman state estimate.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Effort Peak</span>
+                <strong class="benchmark-card__value" id="effortPeakValue">0.00</strong>
+                <p>Largest control burst used to recover, useful for LQR vs PID comparison.</p>
+              </article>
+            </div>
+            <div class="compare-grid">
+              <article class="compare-card">
+                <div class="compare-card__title">Last LQR Run</div>
+                <p id="lqrSummary">Run the guided demo to capture a clean LQR recovery sample.</p>
+              </article>
+              <article class="compare-card">
+                <div class="compare-card__title">Last PID Run</div>
+                <p id="pidSummary">Switch to PID or use the guided demo to generate a baseline.</p>
+              </article>
+            </div>
             <div class="readouts">
               <div class="readout">
                 <div class="readout__title">Motor Command</div>
@@ -126,8 +163,23 @@
             </div>
           </section>
 
-          <section class="panel glass">
-            <span class="eyebrow">Design Notes</span>
+          <section class="panel glass dock__notes">
+            <span class="eyebrow">Guided Demo + Notes</span>
+            <div class="demo-card">
+              <div class="demo-card__meta">
+                <span class="demo-card__eyebrow" id="demoStepTag">Guided Demo</span>
+                <span class="demo-card__progress" id="demoProgress">Ready</span>
+              </div>
+              <h3 id="demoTitle">Start the controls walkthrough</h3>
+              <p id="demoBody">
+                This guided run stages the exact sequence worth showing in a portfolio review: LQR recovery, disturbance rejection,
+                PID comparison, then route tracking.
+              </p>
+              <div class="demo-card__actions">
+                <button class="button button--primary" id="demoAdvanceButton">Start Demo</button>
+                <button class="button" id="demoResetButton">Reset Demo</button>
+              </div>
+            </div>
             <p>
               The true dynamics are integrated nonlinearly with quaternions, while the controller and estimator operate on a hover
               linearization. That separation keeps the physics expressive while letting you feel how optimal control and state
@@ -141,17 +193,48 @@
               <li>Noisy sensor fusion for position, attitude, and angular-rate estimates</li>
             </ul>
             <div class="help-callout">
-              <div class="help-callout__title">What to try</div>
+              <div class="help-callout__title">What to notice</div>
               <p>
-                Toggle between LQR and PID, switch on a route, then hit a wind gust. Export the run after recovery to compare
-                the control story outside the browser.
+                LQR should usually settle faster with a smoother effort story because it is optimizing a full state-error cost. PID is a
+                strong baseline, but it reacts more locally and tends to overshoot or work harder when the same gust hits.
               </p>
             </div>
           </section>
-        </aside>
+        </section>
       </main>
     </div>
 
+    <script>
+      window.__ACL_BOOTED = false;
+      window.__ACL_BOOT_TIMEOUT = null;
+
+      window.__ACL_CLEAR_INTRO = function () {
+        const intro = document.getElementById("intro");
+        if (!intro) return;
+        intro.classList.add("intro--done");
+        window.setTimeout(() => {
+          if (intro.parentNode) {
+            intro.remove();
+          }
+        }, 420);
+      };
+
+      window.__ACL_SHOW_BOOT_ERROR = function (message) {
+        const banner = document.getElementById("bootBanner");
+        if (!banner) return;
+        banner.hidden = false;
+        banner.textContent = message;
+        window.__ACL_CLEAR_INTRO();
+      };
+
+      window.__ACL_BOOT_TIMEOUT = window.setTimeout(() => {
+        if (!window.__ACL_BOOTED) {
+          window.__ACL_SHOW_BOOT_ERROR(
+            "Startup is taking longer than expected. The page was force-opened; if controls stay unresponsive, refresh once or use ./scripts/serve.sh.",
+          );
+        }
+      }, 2600);
+    </script>
     <script defer src="./src/app.bundle.js"></script>
   </body>
 </html>

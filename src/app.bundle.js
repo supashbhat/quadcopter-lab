@@ -589,12 +589,22 @@ class QuadcopterLab {
     this.controllerMode = this.controllerMode === "LQR" ? "PID" : "LQR";
   }
 
-  cycleRoute() {
-    this.routeIndex = (this.routeIndex + 1) % ROUTES.length;
+  setControllerMode(mode) {
+    if (mode === "LQR" || mode === "PID") {
+      this.controllerMode = mode;
+    }
+  }
+
+  setRoute(index) {
+    this.routeIndex = (index + ROUTES.length) % ROUTES.length;
     this.routeTime = 0;
     if (this.routeIndex === 0) {
       this.setTarget(this.targetIndex);
     }
+  }
+
+  cycleRoute() {
+    this.setRoute(this.routeIndex + 1);
   }
 
   step(dt) {
@@ -1044,70 +1054,90 @@ function drawScene(ctx, canvas, sim, cameraAngle) {
     ctx.stroke();
   });
 
+  drawReferenceAxes(ctx, width, height, cameraAngle);
   drawTarget(ctx, sim.target.position, width, height, cameraAngle);
   drawTrace(ctx, sim.histories.trueTrace || [], width, height, cameraAngle, "rgba(127, 200, 255, 0.35)");
   drawTrace(ctx, sim.histories.estimatedTrace || [], width, height, cameraAngle, "rgba(242, 200, 121, 0.3)");
   drawDrone(ctx, sim.trueState, width, height, cameraAngle, false);
   drawDrone(ctx, sim.getEstimatedPose(), width, height, cameraAngle, true);
+  drawFocusMarker(ctx, sim.trueState.position, width, height, cameraAngle);
+  drawInsetTopDown(ctx, sim, width, height);
+  drawInsetElevation(ctx, sim, width, height);
   drawTelemetryOverlay(ctx, sim, width, height);
 }
 
 function drawDrone(ctx, state, width, height, cameraAngle, ghost) {
   const center = state.position;
   const rotorLocal = [
-    [0.24, 0, 0],
-    [0, 0.24, 0],
-    [-0.24, 0, 0],
-    [0, -0.24, 0],
+    [0.52, 0, 0],
+    [0, 0.52, 0],
+    [-0.52, 0, 0],
+    [0, -0.52, 0],
   ];
   const points = rotorLocal.map((point) => addVectors(center, rotateByEuler(point, toEuler(state.quaternion))));
   const center2d = project(center, width, height, cameraAngle);
 
   ctx.strokeStyle = ghost ? "rgba(242, 200, 121, 0.48)" : "rgba(127, 200, 255, 0.92)";
-  ctx.lineWidth = ghost ? 2 : 3.2;
+  ctx.lineWidth = ghost ? 2.8 : 4.6;
+  const p0 = project(points[0], width, height, cameraAngle);
+  const p1 = project(points[1], width, height, cameraAngle);
+  const p2 = project(points[2], width, height, cameraAngle);
+  const p3 = project(points[3], width, height, cameraAngle);
   ctx.beginPath();
-  ctx.moveTo(project(points[0], width, height, cameraAngle).x, project(points[0], width, height, cameraAngle).y);
-  ctx.lineTo(project(points[2], width, height, cameraAngle).x, project(points[2], width, height, cameraAngle).y);
-  ctx.moveTo(project(points[1], width, height, cameraAngle).x, project(points[1], width, height, cameraAngle).y);
-  ctx.lineTo(project(points[3], width, height, cameraAngle).x, project(points[3], width, height, cameraAngle).y);
+  ctx.moveTo(p0.x, p0.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p3.x, p3.y);
   ctx.stroke();
+
+  if (!ghost) {
+    ctx.strokeStyle = "rgba(236, 245, 255, 0.72)";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(center2d.x, center2d.y);
+    ctx.lineTo((p0.x + p1.x) * 0.5, (p0.y + p1.y) * 0.5);
+    ctx.stroke();
+  }
 
   points.forEach((point, index) => {
     const rotor = project(point, width, height, cameraAngle);
     ctx.beginPath();
     ctx.strokeStyle = ghost ? "rgba(242, 200, 121, 0.32)" : "rgba(242, 200, 121, 0.9)";
-    ctx.lineWidth = 2;
-    ctx.arc(rotor.x, rotor.y, ghost ? 12 : 15, 0, Math.PI * 2);
+    ctx.lineWidth = 2.2;
+    ctx.arc(rotor.x, rotor.y, ghost ? 14 : 18, 0, Math.PI * 2);
     ctx.stroke();
 
     if (!ghost) {
       const shimmer = 0.55 + 0.45 * Math.sin(performance.now() * 0.012 + index * 1.7);
       ctx.fillStyle = `rgba(242, 200, 121, ${0.18 * shimmer})`;
       ctx.beginPath();
-      ctx.arc(rotor.x, rotor.y, 20 + shimmer * 6, 0, Math.PI * 2);
+      ctx.arc(rotor.x, rotor.y, 26 + shimmer * 8, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
   ctx.fillStyle = ghost ? "rgba(242, 200, 121, 0.66)" : "#ecf5ff";
   ctx.beginPath();
-  ctx.arc(center2d.x, center2d.y, ghost ? 6 : 8, 0, Math.PI * 2);
+  ctx.arc(center2d.x, center2d.y, ghost ? 7 : 10, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function drawTarget(ctx, target, width, height, cameraAngle) {
   const point = project(target, width, height, cameraAngle);
   ctx.strokeStyle = "rgba(242, 200, 121, 0.86)";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.8;
   ctx.beginPath();
-  ctx.arc(point.x, point.y, 18, 0, Math.PI * 2);
+  ctx.arc(point.x, point.y, 24, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(point.x - 24, point.y);
-  ctx.lineTo(point.x + 24, point.y);
-  ctx.moveTo(point.x, point.y - 24);
-  ctx.lineTo(point.x, point.y + 24);
+  ctx.moveTo(point.x - 32, point.y);
+  ctx.lineTo(point.x + 32, point.y);
+  ctx.moveTo(point.x, point.y - 32);
+  ctx.lineTo(point.x, point.y + 32);
   ctx.stroke();
+  ctx.fillStyle = "rgba(242, 200, 121, 0.92)";
+  ctx.font = "600 12px Inter, sans-serif";
+  ctx.fillText("Target", point.x + 16, point.y - 14);
 }
 
 function drawTelemetryOverlay(ctx, sim, width, height) {
@@ -1128,13 +1158,120 @@ function drawTelemetryOverlay(ctx, sim, width, height) {
   lines.forEach((line, index) => ctx.fillText(line, width - 252, height - 100 + index * 22));
 }
 
+function drawInsetTopDown(ctx, sim, width, height) {
+  const x = width - 270;
+  const y = 28;
+  const w = 230;
+  const h = 170;
+  drawInsetPanel(ctx, x, y, w, h, "Top View");
+
+  const scale = 24;
+  const centerX = x + w / 2;
+  const centerY = y + h / 2 + 12;
+
+  drawInsetGrid(ctx, x, y, w, h);
+
+  const target = sim.target.position;
+  const truePos = sim.trueState.position;
+  const estimatedPos = sim.getEstimatedPose().position;
+
+  drawInsetReticle(ctx, centerX + target[0] * scale, centerY - target[1] * scale, "rgba(242, 200, 121, 0.95)");
+  drawInsetPoint(ctx, centerX + truePos[0] * scale, centerY - truePos[1] * scale, 8, "#9ed8ff");
+  drawInsetPoint(ctx, centerX + estimatedPos[0] * scale, centerY - estimatedPos[1] * scale, 6, "#f2c879");
+  drawInsetLabel(ctx, x + 16, y + h - 18, "x/y plane");
+}
+
+function drawInsetElevation(ctx, sim, width, height) {
+  const x = 28;
+  const y = height - 198;
+  const w = 250;
+  const h = 150;
+  drawInsetPanel(ctx, x, y, w, h, "Elevation");
+
+  const scaleX = 22;
+  const scaleZ = 24;
+  const centerX = x + 46;
+  const baselineY = y + h - 32;
+
+  ctx.strokeStyle = "rgba(122, 164, 219, 0.22)";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x + 16, baselineY);
+  ctx.lineTo(x + w - 16, baselineY);
+  ctx.stroke();
+
+  const target = sim.target.position;
+  const truePos = sim.trueState.position;
+  const estimatedPos = sim.getEstimatedPose().position;
+
+  drawInsetReticle(ctx, centerX + target[0] * scaleX, baselineY - target[2] * scaleZ, "rgba(242, 200, 121, 0.95)");
+  drawInsetPoint(ctx, centerX + truePos[0] * scaleX, baselineY - truePos[2] * scaleZ, 8, "#9ed8ff");
+  drawInsetPoint(ctx, centerX + estimatedPos[0] * scaleX, baselineY - estimatedPos[2] * scaleZ, 6, "#f2c879");
+  drawInsetLabel(ctx, x + 16, y + h - 12, "x/z plane");
+}
+
+function drawInsetPanel(ctx, x, y, w, h, title) {
+  ctx.fillStyle = "rgba(7, 15, 24, 0.84)";
+  ctx.strokeStyle = "rgba(120, 165, 222, 0.18)";
+  roundRect(ctx, x, y, w, h, 18, true, true);
+  ctx.fillStyle = "rgba(237, 245, 255, 0.92)";
+  ctx.font = "600 13px Inter, sans-serif";
+  ctx.fillText(title, x + 16, y + 24);
+}
+
+function drawInsetGrid(ctx, x, y, w, h) {
+  ctx.strokeStyle = "rgba(120, 165, 222, 0.1)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i += 1) {
+    const xx = x + (w / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(xx, y + 34);
+    ctx.lineTo(xx, y + h - 16);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 4; i += 1) {
+    const yy = y + 30 + ((h - 50) / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(x + 16, yy);
+    ctx.lineTo(x + w - 16, yy);
+    ctx.stroke();
+  }
+}
+
+function drawInsetReticle(ctx, x, y, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 16, y);
+  ctx.lineTo(x + 16, y);
+  ctx.moveTo(x, y - 16);
+  ctx.lineTo(x, y + 16);
+  ctx.stroke();
+}
+
+function drawInsetPoint(ctx, x, y, radius, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawInsetLabel(ctx, x, y, text) {
+  ctx.fillStyle = "rgba(170, 188, 208, 0.84)";
+  ctx.font = "500 12px Inter, sans-serif";
+  ctx.fillText(text, x, y);
+}
+
 function drawTrace(ctx, trace, width, height, cameraAngle, color) {
   if (trace.length < 2) {
     return;
   }
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.6;
   ctx.beginPath();
   trace.forEach((point, index) => {
     const projected = project(point, width, height, cameraAngle);
@@ -1144,6 +1281,51 @@ function drawTrace(ctx, trace, width, height, cameraAngle, color) {
       ctx.lineTo(projected.x, projected.y);
     }
   });
+  ctx.stroke();
+}
+
+function drawReferenceAxes(ctx, width, height, cameraAngle) {
+  const origin = project([0, 0, 0], width, height, cameraAngle);
+  const xAxis = project([2.8, 0, 0], width, height, cameraAngle);
+  const yAxis = project([0, 2.8, 0], width, height, cameraAngle);
+  const zAxis = project([0, 0, 2.8], width, height, cameraAngle);
+
+  ctx.lineWidth = 2.2;
+
+  ctx.strokeStyle = "rgba(127, 200, 255, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(xAxis.x, xAxis.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(242, 200, 121, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(yAxis.x, yAxis.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(199, 236, 255, 0.72)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(zAxis.x, zAxis.y);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(227, 238, 250, 0.9)";
+  ctx.font = "600 12px Inter, sans-serif";
+  ctx.fillText("X", xAxis.x + 6, xAxis.y);
+  ctx.fillText("Y", yAxis.x + 6, yAxis.y);
+  ctx.fillText("Z", zAxis.x + 6, zAxis.y);
+}
+
+function drawFocusMarker(ctx, position, width, height, cameraAngle) {
+  const p = project(position, width, height, cameraAngle);
+  ctx.strokeStyle = "rgba(127, 200, 255, 0.16)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 48, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 78, 0, Math.PI * 2);
   ctx.stroke();
 }
 
@@ -1214,8 +1396,8 @@ function fillPanel(ctx, width, height) {
 }
 
 function project(point, width, height, cameraAngle) {
-  const cameraDistance = 10.5;
-  const elevated = 4.8;
+  const cameraDistance = 12.5;
+  const elevated = 1.5;
   const cos = Math.cos(cameraAngle);
   const sin = Math.sin(cameraAngle);
 
@@ -1224,10 +1406,10 @@ function project(point, width, height, cameraAngle) {
   const z = point[2];
 
   const depth = cameraDistance + y;
-  const scale = 520 / depth;
+  const scale = 760 / depth;
   return {
-    x: width * 0.5 + x * scale,
-    y: height * 0.72 - (z - elevated) * scale,
+    x: width * 0.46 + x * scale,
+    y: height * 0.54 - (z - elevated) * scale,
   };
 }
 
@@ -1342,6 +1524,18 @@ let windValue;
 let settleValue;
 let controllerValue;
 let routeValue;
+let settlingTimeValue;
+let peakErrorValue;
+let estimateRmsValue;
+let effortPeakValue;
+let lqrSummary;
+let pidSummary;
+let demoStepTag;
+let demoProgress;
+let demoTitle;
+let demoBody;
+let demoAdvanceButton;
+let demoResetButton;
 let resetButton;
 let gustButton;
 let targetButton;
@@ -1351,6 +1545,8 @@ let routeButton;
 let pauseButton;
 let exportButton;
 let paused = false;
+let benchmarkTracker;
+let demoDirector;
 
 boot();
 
@@ -1373,6 +1569,18 @@ function boot() {
     settleValue = requireElement("settleValue");
     controllerValue = requireElement("controllerValue");
     routeValue = requireElement("routeValue");
+    settlingTimeValue = requireElement("settlingTimeValue");
+    peakErrorValue = requireElement("peakErrorValue");
+    estimateRmsValue = requireElement("estimateRmsValue");
+    effortPeakValue = requireElement("effortPeakValue");
+    lqrSummary = requireElement("lqrSummary");
+    pidSummary = requireElement("pidSummary");
+    demoStepTag = requireElement("demoStepTag");
+    demoProgress = requireElement("demoProgress");
+    demoTitle = requireElement("demoTitle");
+    demoBody = requireElement("demoBody");
+    demoAdvanceButton = requireElement("demoAdvanceButton");
+    demoResetButton = requireElement("demoResetButton");
     resetButton = requireElement("resetButton");
     gustButton = requireElement("gustButton");
     targetButton = requireElement("targetButton");
@@ -1384,6 +1592,10 @@ function boot() {
 
     buildSliders();
     wireButtons();
+    benchmarkTracker = new BenchmarkTracker();
+    demoDirector = new DemoDirector();
+    benchmarkTracker.startEpisode(sim, "Initial hover recovery");
+    demoDirector.render();
     kickIntro();
 
     let last = performance.now();
@@ -1393,6 +1605,7 @@ function boot() {
       if (!paused) {
         sim.step(dt);
       }
+      benchmarkTracker.update(sim, dt, paused);
       renderer.render(sim, dt);
       syncText();
       requestAnimationFrame(frame);
@@ -1447,29 +1660,41 @@ function buildSliders() {
 }
 
 function wireButtons() {
-  resetButton.addEventListener("click", () => sim.reset());
-  gustButton.addEventListener("click", () => sim.injectWind());
+  resetButton.addEventListener("click", () => {
+    sim.reset();
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} reset`);
+  });
+  gustButton.addEventListener("click", () => {
+    sim.injectWind();
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} gust recovery`);
+  });
   targetButton.addEventListener("click", () => {
     sim.cycleTarget();
     targetButton.textContent = `Target: ${sim.targetName}`;
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} target retune`);
   });
   scenarioButton.addEventListener("click", () => {
     sim.cycleScenario();
     scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} ${sim.sceneName.toLowerCase()} setup`);
   });
   modeButton.addEventListener("click", () => {
     sim.toggleControllerMode();
     modeButton.textContent = `Mode: ${sim.controllerMode}`;
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} controller`);
   });
   routeButton.addEventListener("click", () => {
     sim.cycleRoute();
     routeButton.textContent = `Route: ${sim.routeName}`;
+    benchmarkTracker.startEpisode(sim, `${sim.controllerMode} ${sim.routeName.toLowerCase()} route`);
   });
   pauseButton.addEventListener("click", () => {
     paused = !paused;
     pauseButton.textContent = paused ? "Resume" : "Pause";
   });
   exportButton.addEventListener("click", exportTelemetry);
+  demoAdvanceButton.addEventListener("click", () => demoDirector.advance());
+  demoResetButton.addEventListener("click", () => demoDirector.reset());
 }
 
 function syncText() {
@@ -1485,10 +1710,22 @@ function syncText() {
       : "radial-gradient(circle, #ffd8cb, #ff9a7a)";
   controllerValue.textContent = sim.controllerMode;
   routeValue.textContent = sim.routeName;
+
+  const benchmark = benchmarkTracker.getCurrentSnapshot();
+  settlingTimeValue.textContent = benchmark.settlingTime;
+  peakErrorValue.textContent = benchmark.peakError;
+  estimateRmsValue.textContent = benchmark.estimateRms;
+  effortPeakValue.textContent = benchmark.effortPeak;
+  lqrSummary.textContent = benchmarkTracker.getControllerSummary("LQR");
+  pidSummary.textContent = benchmarkTracker.getControllerSummary("PID");
+  demoDirector.render();
 }
 
 function kickIntro() {
   setTimeout(() => {
+    if (sim) {
+      sim.reset();
+    }
     if (window.__ACL_CLEAR_INTRO) {
       window.__ACL_CLEAR_INTRO();
     }
@@ -1496,7 +1733,11 @@ function kickIntro() {
 }
 
 function exportTelemetry() {
-  const payload = sim.exportLog();
+  const payload = {
+    ...sim.exportLog(),
+    benchmark: benchmarkTracker.export(),
+    demoStep: demoDirector.index,
+  };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -1512,6 +1753,236 @@ function requireElement(id) {
     throw new Error(`Missing required element: ${id}`);
   }
   return element;
+}
+
+class BenchmarkTracker {
+  constructor() {
+    this.current = null;
+    this.history = {
+      LQR: null,
+      PID: null,
+    };
+  }
+
+  startEpisode(simulation, label) {
+    this.finalizeCurrent();
+    this.current = {
+      label,
+      controller: simulation.controllerMode,
+      scenario: simulation.sceneName,
+      route: simulation.routeName,
+      elapsed: 0,
+      peakError: simulation.metrics?.positionError || 0,
+      effortPeak: simulation.metrics?.effortNorm || 0,
+      estimateSquareIntegral: 0,
+      stableDuration: 0,
+      settleSeconds: null,
+      sampled: 0,
+    };
+  }
+
+  update(simulation, dt, isPaused) {
+    if (isPaused || !simulation.metrics) {
+      return;
+    }
+
+    if (!this.current) {
+      this.startEpisode(simulation, `${simulation.controllerMode} live sample`);
+    }
+
+    this.current.elapsed += dt;
+    this.current.sampled += 1;
+    this.current.peakError = Math.max(this.current.peakError, simulation.metrics.positionError);
+    this.current.effortPeak = Math.max(this.current.effortPeak, simulation.metrics.effortNorm);
+    this.current.estimateSquareIntegral += simulation.metrics.estimateGap ** 2 * dt;
+
+    const isSettled = simulation.metrics.positionError < 0.35 && simulation.metrics.attitudeError < 6.5;
+    this.current.stableDuration = isSettled ? this.current.stableDuration + dt : 0;
+
+    if (this.current.settleSeconds === null && this.current.stableDuration > 0.9) {
+      this.current.settleSeconds = Math.max(0, this.current.elapsed - this.current.stableDuration);
+    }
+  }
+
+  finalizeCurrent() {
+    if (!this.current || this.current.elapsed < 0.5) {
+      return;
+    }
+
+    this.history[this.current.controller] = this.snapshotFromEpisode(this.current);
+  }
+
+  snapshotFromEpisode(episode) {
+    const estimateRms = Math.sqrt(episode.estimateSquareIntegral / Math.max(episode.elapsed, 1e-6));
+    return {
+      controller: episode.controller,
+      label: episode.label,
+      scenario: episode.scenario,
+      route: episode.route,
+      settlingTime: episode.settleSeconds === null ? "Tracking..." : `${episode.settleSeconds.toFixed(2)} s`,
+      peakError: `${episode.peakError.toFixed(2)} m`,
+      effortPeak: episode.effortPeak.toFixed(2),
+      estimateRms: `${estimateRms.toFixed(2)} m`,
+      rawSettlingTime: episode.settleSeconds,
+      rawPeakError: episode.peakError,
+      rawEffortPeak: episode.effortPeak,
+      rawEstimateRms: estimateRms,
+    };
+  }
+
+  getCurrentSnapshot() {
+    if (!this.current) {
+      return {
+        settlingTime: "Tracking...",
+        peakError: "0.00 m",
+        estimateRms: "0.00 m",
+        effortPeak: "0.00",
+      };
+    }
+    return this.snapshotFromEpisode(this.current);
+  }
+
+  getControllerSummary(controller) {
+    const summary = this.history[controller];
+    if (!summary) {
+      return `No ${controller} recovery sample yet. Use the guided demo to capture one.`;
+    }
+    return `${summary.label}: settled ${summary.settlingTime}, peak ${summary.peakError}, estimate RMS ${summary.estimateRms}.`;
+  }
+
+  export() {
+    return {
+      current: this.getCurrentSnapshot(),
+      history: this.history,
+    };
+  }
+}
+
+class DemoDirector {
+  constructor() {
+    this.index = 0;
+    this.steps = [
+      {
+        tag: "Guided Demo",
+        progress: "Ready",
+        title: "Start the controls walkthrough",
+        body:
+          "This guided run stages the exact sequence worth showing in a portfolio review: LQR recovery, disturbance rejection, PID comparison, then route tracking.",
+        button: "Start Demo",
+        action: () => {
+          paused = false;
+          pauseButton.textContent = "Pause";
+          sim.setControllerMode("LQR");
+          sim.setRoute(0);
+          sim.setTarget(0);
+          sim.setScenario(0);
+          sim.reset();
+          modeButton.textContent = `Mode: ${sim.controllerMode}`;
+          routeButton.textContent = `Route: ${sim.routeName}`;
+          targetButton.textContent = `Target: ${sim.targetName}`;
+          scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
+          benchmarkTracker.startEpisode(sim, "LQR hover recovery");
+        },
+      },
+      {
+        tag: "Step 1",
+        progress: "1 / 4",
+        title: "Watch the LQR hover recovery",
+        body:
+          "The quad starts displaced from hover. LQR uses the hover model to trade state error against control effort, so you should see a fairly direct but not too aggressive return.",
+        button: "Inject Gust",
+        action: () => {
+          sim.injectWind();
+          benchmarkTracker.startEpisode(sim, "LQR gust recovery");
+        },
+      },
+      {
+        tag: "Step 2",
+        progress: "2 / 4",
+        title: "Stress the estimator with a disturbance",
+        body:
+          "When the gust hits, compare the blue true vehicle with the gold estimate. If the Kalman filter is doing its job, the gap should stay modest while the controller regains hover.",
+        button: "Switch To PID",
+        action: () => {
+          sim.setControllerMode("PID");
+          sim.setRoute(0);
+          sim.setScenario(0);
+          sim.reset();
+          modeButton.textContent = `Mode: ${sim.controllerMode}`;
+          routeButton.textContent = `Route: ${sim.routeName}`;
+          scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
+          benchmarkTracker.startEpisode(sim, "PID hover recovery");
+        },
+      },
+      {
+        tag: "Step 3",
+        progress: "3 / 4",
+        title: "Compare the PID baseline",
+        body:
+          "PID only reacts to local error terms. It is a strong baseline, but it usually overshoots more or uses sharper effort than LQR on the same recovery problem.",
+        button: "Run Route Tracking",
+        action: () => {
+          sim.setControllerMode("LQR");
+          sim.setRoute(2);
+          sim.setScenario(0);
+          sim.reset();
+          modeButton.textContent = `Mode: ${sim.controllerMode}`;
+          routeButton.textContent = `Route: ${sim.routeName}`;
+          scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
+          benchmarkTracker.startEpisode(sim, "LQR spiral route");
+        },
+      },
+      {
+        tag: "Step 4",
+        progress: "4 / 4",
+        title: "Finish with route tracking",
+        body:
+          "The spiral route shows the same controller-estimator stack working beyond simple hover hold. Export the log afterward if you want a clean benchmark artifact for the repo.",
+        button: "Restart Demo",
+        action: () => {
+          this.index = -1;
+        },
+      },
+    ];
+  }
+
+  advance() {
+    const step = this.steps[this.index];
+    if (step?.action) {
+      step.action();
+    }
+    this.index = (this.index + 1) % this.steps.length;
+    this.render();
+  }
+
+  reset() {
+    this.index = 0;
+    paused = false;
+    pauseButton.textContent = "Pause";
+    sim.setControllerMode("LQR");
+    sim.setRoute(0);
+    sim.setTarget(0);
+    sim.setScenario(0);
+    sim.reset();
+    modeButton.textContent = `Mode: ${sim.controllerMode}`;
+    routeButton.textContent = `Route: ${sim.routeName}`;
+    targetButton.textContent = `Target: ${sim.targetName}`;
+    scenarioButton.textContent = `Scenario: ${sim.sceneName}`;
+    benchmarkTracker.startEpisode(sim, "LQR hover recovery");
+    this.render();
+  }
+
+  render() {
+    const step = this.steps[this.index];
+    if (!step) {
+      return;
+    }
+    demoStepTag.textContent = step.tag;
+    demoProgress.textContent = step.progress;
+    demoTitle.textContent = step.title;
+    demoBody.textContent = step.body;
+    demoAdvanceButton.textContent = step.button;
+  }
 }
 
 }

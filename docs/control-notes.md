@@ -37,6 +37,17 @@ The lab now includes two control modes:
 
 The goal is not to claim that the PID mode is globally optimal. It exists to make the benefits of the LQR formulation more legible in the same environment and under the same disturbances.
 
+## Interpreting the benchmark cards
+
+The UI now exposes a compact recovery summary:
+
+- `Settling Time`: how quickly the vehicle returns to a small hover-error band
+- `Peak Error`: the largest positional miss during the current recovery segment
+- `Estimate RMS`: average gap between the Kalman estimate and the true simulated state
+- `Effort Peak`: largest control burst used during the recovery
+
+Those numbers are intentionally lightweight rather than academically exhaustive. The goal is to help a reviewer see, in a few seconds, whether one control mode is recovering more cleanly than another.
+
 ## Actuator realism
 
 Motor commands are no longer treated as instantaneously realized thrust. A first-order spool model smooths each rotor toward its commanded thrust, which makes aggressive corrections visibly less idealized and introduces a more realistic control-effort story.

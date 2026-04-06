@@ -6,6 +6,7 @@
 - Hover-state LQR controller plus PID comparison mode
 - Discrete Kalman filter with noisy sensor fusion
 - Motor spool dynamics, route playback, telemetry export
+- Recovery benchmark cards and a guided demo narrative for controller comparison
 - Blue-gold browser visualization with telemetry and scenario controls
 
 ## Next control upgrades
@@ -16,7 +17,7 @@
 
 ## Next analysis upgrades
 
-- Log settling time and overshoot across scenarios
+- Add batch scenario sweeps instead of only single-run benchmark cards
 - Export run histories for notebook-based benchmark plots
 - Add wind-rejection scorecards and batch replay
 - Plot estimator covariance against actual state error
