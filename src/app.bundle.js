@@ -2,6 +2,7 @@
 window.__ACL__ = window.__ACL__ || {};
 
 // ----- linalg.js -----
+{
 function zeros(rows, cols) {
   return Array.from({ length: rows }, () => Array(cols).fill(0));
 }
@@ -133,8 +134,10 @@ window.__ACL__.scaleVector = scaleVector;
 window.__ACL__.dot = dot;
 window.__ACL__.magnitude = magnitude;
 window.__ACL__.inverse = inverse;
+}
 
 // ----- quaternion.js -----
+{
 const { magnitude, scaleVector } = window.__ACL__;
 function normalizeQuaternion(q) {
   const norm = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]) || 1;
@@ -222,8 +225,10 @@ window.__ACL__.fromEuler = fromEuler;
 window.__ACL__.toEuler = toEuler;
 window.__ACL__.smoothQuaternionToward = smoothQuaternionToward;
 window.__ACL__.axisAngle = axisAngle;
+}
 
 // ----- control.js -----
+{
 const { addMatrices, cloneMatrix, diag, identity, inverse, mulMatrices, mulMatrixVector, scaleMatrix, subMatrices, subVectors } = window.__ACL__;
 function buildHoverModel(params, dt) {
   const { gravity, mass, inertia, linearDamping, angularDamping } = params;
@@ -386,8 +391,10 @@ window.__ACL__.buildWeights = buildWeights;
 window.__ACL__.solveDiscreteLQR = solveDiscreteLQR;
 window.__ACL__.buildMeasurementModel = buildMeasurementModel;
 window.__ACL__.DiscreteKalmanFilter = DiscreteKalmanFilter;
+}
 
 // ----- quadcopter.js -----
+{
 const { buildHoverModel, buildWeights, DiscreteKalmanFilter, solveDiscreteLQR } = window.__ACL__;
 const { inverse, magnitude, mulMatrixVector, subVectors } = window.__ACL__;
 const { fromEuler, normalizeQuaternion, quaternionDerivative, rotateVector, toEuler } = window.__ACL__;
@@ -970,8 +977,10 @@ function smoothstep(t) {
 }
 
 window.__ACL__.QuadcopterLab = QuadcopterLab;
+}
 
 // ----- renderer.js -----
+{
 const { toEuler } = window.__ACL__;
 class Renderer {
   constructor(sceneCanvas, motorCanvas, errorCanvas, effortCanvas, altitudeCanvas) {
@@ -1309,8 +1318,10 @@ function addVectors(a, b) {
 }
 
 window.__ACL__.Renderer = Renderer;
+}
 
 // ----- app.js -----
+{
 const { QuadcopterLab } = window.__ACL__;
 const { Renderer } = window.__ACL__;
 const sliderDefinitions = [
@@ -1321,50 +1332,83 @@ const sliderDefinitions = [
   { id: "windScale", label: "Wind Strength", min: 0.4, max: 2.4, step: 0.01, value: 1.0 },
 ];
 
-const sim = new QuadcopterLab();
-const renderer = new Renderer(
-  document.getElementById("sceneCanvas"),
-  document.getElementById("motorCanvas"),
-  document.getElementById("errorCanvas"),
-  document.getElementById("effortCanvas"),
-  document.getElementById("altitudeCanvas"),
-);
-
-const statusLabel = document.getElementById("statusLabel");
-const statusDot = document.getElementById("statusDot");
-const positionError = document.getElementById("positionError");
-const attitudeError = document.getElementById("attitudeError");
-const windValue = document.getElementById("windValue");
-const settleValue = document.getElementById("settleValue");
-const controllerValue = document.getElementById("controllerValue");
-const routeValue = document.getElementById("routeValue");
-const resetButton = document.getElementById("resetButton");
-const gustButton = document.getElementById("gustButton");
-const targetButton = document.getElementById("targetButton");
-const scenarioButton = document.getElementById("scenarioButton");
-const modeButton = document.getElementById("modeButton");
-const routeButton = document.getElementById("routeButton");
-const pauseButton = document.getElementById("pauseButton");
-const exportButton = document.getElementById("exportButton");
-
+let sim;
+let renderer;
+let statusLabel;
+let statusDot;
+let positionError;
+let attitudeError;
+let windValue;
+let settleValue;
+let controllerValue;
+let routeValue;
+let resetButton;
+let gustButton;
+let targetButton;
+let scenarioButton;
+let modeButton;
+let routeButton;
+let pauseButton;
+let exportButton;
 let paused = false;
 
-buildSliders();
-wireButtons();
-kickIntro();
+boot();
 
-let last = performance.now();
-requestAnimationFrame(frame);
+function boot() {
+  try {
+    sim = new QuadcopterLab();
+    renderer = new Renderer(
+      requireElement("sceneCanvas"),
+      requireElement("motorCanvas"),
+      requireElement("errorCanvas"),
+      requireElement("effortCanvas"),
+      requireElement("altitudeCanvas"),
+    );
 
-function frame(now) {
-  const dt = Math.min(0.035, (now - last) / 1000 || 1 / 60);
-  last = now;
-  if (!paused) {
-    sim.step(dt);
+    statusLabel = requireElement("statusLabel");
+    statusDot = requireElement("statusDot");
+    positionError = requireElement("positionError");
+    attitudeError = requireElement("attitudeError");
+    windValue = requireElement("windValue");
+    settleValue = requireElement("settleValue");
+    controllerValue = requireElement("controllerValue");
+    routeValue = requireElement("routeValue");
+    resetButton = requireElement("resetButton");
+    gustButton = requireElement("gustButton");
+    targetButton = requireElement("targetButton");
+    scenarioButton = requireElement("scenarioButton");
+    modeButton = requireElement("modeButton");
+    routeButton = requireElement("routeButton");
+    pauseButton = requireElement("pauseButton");
+    exportButton = requireElement("exportButton");
+
+    buildSliders();
+    wireButtons();
+    kickIntro();
+
+    let last = performance.now();
+    const frame = (now) => {
+      const dt = Math.min(0.035, (now - last) / 1000 || 1 / 60);
+      last = now;
+      if (!paused) {
+        sim.step(dt);
+      }
+      renderer.render(sim, dt);
+      syncText();
+      requestAnimationFrame(frame);
+    };
+
+    window.__ACL_BOOTED = true;
+    if (window.__ACL_BOOT_TIMEOUT) {
+      window.clearTimeout(window.__ACL_BOOT_TIMEOUT);
+    }
+    requestAnimationFrame(frame);
+  } catch (error) {
+    console.error(error);
+    if (window.__ACL_SHOW_BOOT_ERROR) {
+      window.__ACL_SHOW_BOOT_ERROR(`Boot error: ${error.message}`);
+    }
   }
-  renderer.render(sim, dt);
-  syncText();
-  requestAnimationFrame(frame);
 }
 
 function buildSliders() {
@@ -1444,9 +1488,11 @@ function syncText() {
 }
 
 function kickIntro() {
-  const intro = document.getElementById("intro");
-  setTimeout(() => intro.classList.add("intro--done"), 3200);
-  setTimeout(() => intro.remove(), 4100);
+  setTimeout(() => {
+    if (window.__ACL_CLEAR_INTRO) {
+      window.__ACL_CLEAR_INTRO();
+    }
+  }, 3200);
 }
 
 function exportTelemetry() {
@@ -1460,4 +1506,13 @@ function exportTelemetry() {
   URL.revokeObjectURL(url);
 }
 
+function requireElement(id) {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing required element: ${id}`);
+  }
+  return element;
+}
+
+}
 

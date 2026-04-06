@@ -60,7 +60,9 @@ def main() -> None:
 
     for path in ORDER:
         chunks.append(f"// ----- {path.name} -----\n")
+        chunks.append("{\n")
         chunks.append(transform_module(path.read_text()))
+        chunks.append("}\n")
         chunks.append("\n")
 
     OUT.write_text("".join(chunks))
