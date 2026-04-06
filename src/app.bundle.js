@@ -2,11 +2,11 @@
 window.__ACL__ = window.__ACL__ || {};
 
 // ----- linalg.js -----
-window.__ACL__.zeros = function zeros(rows, cols) {
+function zeros(rows, cols) {
   return Array.from({ length: rows }, () => Array(cols).fill(0));
 }
 
-window.__ACL__.identity = function identity(size) {
+function identity(size) {
   const out = zeros(size, size);
   for (let i = 0; i < size; i += 1) {
     out[i][i] = 1;
@@ -14,7 +14,7 @@ window.__ACL__.identity = function identity(size) {
   return out;
 }
 
-window.__ACL__.diag = function diag(values) {
+function diag(values) {
   const out = zeros(values.length, values.length);
   for (let i = 0; i < values.length; i += 1) {
     out[i][i] = values[i];
@@ -22,27 +22,27 @@ window.__ACL__.diag = function diag(values) {
   return out;
 }
 
-window.__ACL__.cloneMatrix = function cloneMatrix(matrix) {
+function cloneMatrix(matrix) {
   return matrix.map((row) => [...row]);
 }
 
-window.__ACL__.addMatrices = function addMatrices(a, b) {
+function addMatrices(a, b) {
   return a.map((row, i) => row.map((value, j) => value + b[i][j]));
 }
 
-window.__ACL__.subMatrices = function subMatrices(a, b) {
+function subMatrices(a, b) {
   return a.map((row, i) => row.map((value, j) => value - b[i][j]));
 }
 
-window.__ACL__.scaleMatrix = function scaleMatrix(matrix, scalar) {
+function scaleMatrix(matrix, scalar) {
   return matrix.map((row) => row.map((value) => value * scalar));
 }
 
-window.__ACL__.transpose = function transpose(matrix) {
+function transpose(matrix) {
   return matrix[0].map((_, col) => matrix.map((row) => row[col]));
 }
 
-window.__ACL__.mulMatrices = function mulMatrices(a, b) {
+function mulMatrices(a, b) {
   const out = zeros(a.length, b[0].length);
   for (let i = 0; i < a.length; i += 1) {
     for (let k = 0; k < b.length; k += 1) {
@@ -54,31 +54,31 @@ window.__ACL__.mulMatrices = function mulMatrices(a, b) {
   return out;
 }
 
-window.__ACL__.mulMatrixVector = function mulMatrixVector(matrix, vector) {
+function mulMatrixVector(matrix, vector) {
   return matrix.map((row) => row.reduce((sum, value, index) => sum + value * vector[index], 0));
 }
 
-window.__ACL__.addVectors = function addVectors(a, b) {
+function addVectors(a, b) {
   return a.map((value, index) => value + b[index]);
 }
 
-window.__ACL__.subVectors = function subVectors(a, b) {
+function subVectors(a, b) {
   return a.map((value, index) => value - b[index]);
 }
 
-window.__ACL__.scaleVector = function scaleVector(vector, scalar) {
+function scaleVector(vector, scalar) {
   return vector.map((value) => value * scalar);
 }
 
-window.__ACL__.dot = function dot(a, b) {
+function dot(a, b) {
   return a.reduce((sum, value, index) => sum + value * b[index], 0);
 }
 
-window.__ACL__.magnitude = function magnitude(vector) {
+function magnitude(vector) {
   return Math.sqrt(dot(vector, vector));
 }
 
-window.__ACL__.inverse = function inverse(matrix) {
+function inverse(matrix) {
   const size = matrix.length;
   const working = matrix.map((row, i) => [...row, ...identity(size)[i]]);
 
@@ -117,14 +117,31 @@ window.__ACL__.inverse = function inverse(matrix) {
   return working.map((row) => row.slice(size));
 }
 
+window.__ACL__.zeros = zeros;
+window.__ACL__.identity = identity;
+window.__ACL__.diag = diag;
+window.__ACL__.cloneMatrix = cloneMatrix;
+window.__ACL__.addMatrices = addMatrices;
+window.__ACL__.subMatrices = subMatrices;
+window.__ACL__.scaleMatrix = scaleMatrix;
+window.__ACL__.transpose = transpose;
+window.__ACL__.mulMatrices = mulMatrices;
+window.__ACL__.mulMatrixVector = mulMatrixVector;
+window.__ACL__.addVectors = addVectors;
+window.__ACL__.subVectors = subVectors;
+window.__ACL__.scaleVector = scaleVector;
+window.__ACL__.dot = dot;
+window.__ACL__.magnitude = magnitude;
+window.__ACL__.inverse = inverse;
+
 // ----- quaternion.js -----
 const { magnitude, scaleVector } = window.__ACL__;
-window.__ACL__.normalizeQuaternion = function normalizeQuaternion(q) {
+function normalizeQuaternion(q) {
   const norm = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]) || 1;
   return q.map((value) => value / norm);
 }
 
-window.__ACL__.quaternionMultiply = function quaternionMultiply(a, b) {
+function quaternionMultiply(a, b) {
   const [aw, ax, ay, az] = a;
   const [bw, bx, by, bz] = b;
   return [
@@ -135,22 +152,22 @@ window.__ACL__.quaternionMultiply = function quaternionMultiply(a, b) {
   ];
 }
 
-window.__ACL__.quaternionConjugate = function quaternionConjugate(q) {
+function quaternionConjugate(q) {
   return [q[0], -q[1], -q[2], -q[3]];
 }
 
-window.__ACL__.rotateVector = function rotateVector(q, vector) {
+function rotateVector(q, vector) {
   const pure = [0, ...vector];
   const rotated = quaternionMultiply(quaternionMultiply(q, pure), quaternionConjugate(q));
   return rotated.slice(1);
 }
 
-window.__ACL__.quaternionDerivative = function quaternionDerivative(q, omega) {
+function quaternionDerivative(q, omega) {
   const omegaQuat = [0, omega[0], omega[1], omega[2]];
   return scaleVector(quaternionMultiply(q, omegaQuat), 0.5);
 }
 
-window.__ACL__.fromEuler = function fromEuler(roll, pitch, yaw) {
+function fromEuler(roll, pitch, yaw) {
   const cr = Math.cos(roll * 0.5);
   const sr = Math.sin(roll * 0.5);
   const cp = Math.cos(pitch * 0.5);
@@ -166,7 +183,7 @@ window.__ACL__.fromEuler = function fromEuler(roll, pitch, yaw) {
   ]);
 }
 
-window.__ACL__.toEuler = function toEuler(q) {
+function toEuler(q) {
   const [w, x, y, z] = normalizeQuaternion(q);
 
   const sinrCosp = 2 * (w * x + y * z);
@@ -183,12 +200,12 @@ window.__ACL__.toEuler = function toEuler(q) {
   return [roll, pitch, yaw];
 }
 
-window.__ACL__.smoothQuaternionToward = function smoothQuaternionToward(q, toward, rate) {
+function smoothQuaternionToward(q, toward, rate) {
   const mixed = q.map((value, index) => value * (1 - rate) + toward[index] * rate);
   return normalizeQuaternion(mixed);
 }
 
-window.__ACL__.axisAngle = function axisAngle(axis, angle) {
+function axisAngle(axis, angle) {
   const axisNorm = magnitude(axis) || 1;
   const normalized = axis.map((value) => value / axisNorm);
   const half = angle * 0.5;
@@ -196,9 +213,19 @@ window.__ACL__.axisAngle = function axisAngle(axis, angle) {
   return normalizeQuaternion([Math.cos(half), normalized[0] * s, normalized[1] * s, normalized[2] * s]);
 }
 
+window.__ACL__.normalizeQuaternion = normalizeQuaternion;
+window.__ACL__.quaternionMultiply = quaternionMultiply;
+window.__ACL__.quaternionConjugate = quaternionConjugate;
+window.__ACL__.rotateVector = rotateVector;
+window.__ACL__.quaternionDerivative = quaternionDerivative;
+window.__ACL__.fromEuler = fromEuler;
+window.__ACL__.toEuler = toEuler;
+window.__ACL__.smoothQuaternionToward = smoothQuaternionToward;
+window.__ACL__.axisAngle = axisAngle;
+
 // ----- control.js -----
 const { addMatrices, cloneMatrix, diag, identity, inverse, mulMatrices, mulMatrixVector, scaleMatrix, subMatrices, subVectors } = window.__ACL__;
-window.__ACL__.buildHoverModel = function buildHoverModel(params, dt) {
+function buildHoverModel(params, dt) {
   const { gravity, mass, inertia, linearDamping, angularDamping } = params;
   const [ixx, iyy, izz] = inertia;
 
@@ -233,7 +260,7 @@ window.__ACL__.buildHoverModel = function buildHoverModel(params, dt) {
   return { A, B, Ad, Bd };
 }
 
-window.__ACL__.buildWeights = function buildWeights(stateScale, effortScale) {
+function buildWeights(stateScale, effortScale) {
   const q = diag([
     8.5 * stateScale,
     8.5 * stateScale,
@@ -259,7 +286,7 @@ window.__ACL__.buildWeights = function buildWeights(stateScale, effortScale) {
   return { q, r };
 }
 
-window.__ACL__.solveDiscreteLQR = function solveDiscreteLQR(ad, bd, q, r, iterations = 140) {
+function solveDiscreteLQR(ad, bd, q, r, iterations = 140) {
   let p = cloneMatrix(q);
   const at = ad[0].map((_, col) => ad.map((row) => row[col]));
   const bt = bd[0].map((_, col) => bd.map((row) => row[col]));
@@ -277,7 +304,7 @@ window.__ACL__.solveDiscreteLQR = function solveDiscreteLQR(ad, bd, q, r, iterat
   return k;
 }
 
-window.__ACL__.buildMeasurementModel = function buildMeasurementModel() {
+function buildMeasurementModel() {
   const h = Array.from({ length: 9 }, () => Array(12).fill(0));
   h[0][0] = 1;
   h[1][1] = 1;
@@ -291,7 +318,7 @@ window.__ACL__.buildMeasurementModel = function buildMeasurementModel() {
   return h;
 }
 
-window.__ACL__.DiscreteKalmanFilter = class DiscreteKalmanFilter {
+class DiscreteKalmanFilter {
   constructor(ad, bd, processScale, measurementScale) {
     this.ad = ad;
     this.bd = bd;
@@ -353,6 +380,12 @@ function addVectorsSafe(a, b) {
 function transposeInline(matrix) {
   return matrix[0].map((_, col) => matrix.map((row) => row[col]));
 }
+
+window.__ACL__.buildHoverModel = buildHoverModel;
+window.__ACL__.buildWeights = buildWeights;
+window.__ACL__.solveDiscreteLQR = solveDiscreteLQR;
+window.__ACL__.buildMeasurementModel = buildMeasurementModel;
+window.__ACL__.DiscreteKalmanFilter = DiscreteKalmanFilter;
 
 // ----- quadcopter.js -----
 const { buildHoverModel, buildWeights, DiscreteKalmanFilter, solveDiscreteLQR } = window.__ACL__;
@@ -425,7 +458,7 @@ const ROUTES = [
   },
 ];
 
-window.__ACL__.QuadcopterLab = class QuadcopterLab {
+class QuadcopterLab {
   constructor() {
     this.params = { ...DEFAULT_PARAMS };
     this.sceneIndex = 0;
@@ -936,9 +969,11 @@ function smoothstep(t) {
   return t * t * (3 - 2 * t);
 }
 
+window.__ACL__.QuadcopterLab = QuadcopterLab;
+
 // ----- renderer.js -----
 const { toEuler } = window.__ACL__;
-window.__ACL__.Renderer = class Renderer {
+class Renderer {
   constructor(sceneCanvas, motorCanvas, errorCanvas, effortCanvas, altitudeCanvas) {
     this.sceneCanvas = sceneCanvas;
     this.scene = sceneCanvas.getContext("2d");
@@ -1273,6 +1308,8 @@ function addVectors(a, b) {
   return a.map((value, index) => value + b[index]);
 }
 
+window.__ACL__.Renderer = Renderer;
+
 // ----- app.js -----
 const { QuadcopterLab } = window.__ACL__;
 const { Renderer } = window.__ACL__;
@@ -1422,4 +1459,5 @@ function exportTelemetry() {
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
 

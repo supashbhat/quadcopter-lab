@@ -21,23 +21,30 @@ IMPORT_RE = re.compile(r'import\s*\{([^}]*)\}\s*from\s*"[^"]+";\s*', re.MULTILIN
 
 
 def transform_module(text: str) -> str:
+    exports: list[str] = []
     text = IMPORT_RE.sub(_replace_import, text)
-    text = re.sub(
-        r'export\s+function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(',
-        lambda match: f'window.__ACL__.{match.group(1)} = function {match.group(1)}(',
-        text,
-    )
-    text = re.sub(
-        r'export\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\s*',
-        lambda match: f'window.__ACL__.{match.group(1)} = class {match.group(1)} ',
-        text,
-    )
-    text = re.sub(
-        r'export\s+const\s+([A-Za-z_][A-Za-z0-9_]*)\s*=',
-        lambda match: f'window.__ACL__.{match.group(1)} =',
-        text,
-    )
-    return text.strip() + "\n"
+
+    def replace_function(match: re.Match) -> str:
+        name = match.group(1)
+        exports.append(name)
+        return f"function {name}("
+
+    def replace_class(match: re.Match) -> str:
+        name = match.group(1)
+        exports.append(name)
+        return f"class {name} "
+
+    def replace_const(match: re.Match) -> str:
+        name = match.group(1)
+        exports.append(name)
+        return f"const {name} ="
+
+    text = re.sub(r'export\s+function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(', replace_function, text)
+    text = re.sub(r'export\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\s*', replace_class, text)
+    text = re.sub(r'export\s+const\s+([A-Za-z_][A-Za-z0-9_]*)\s*=', replace_const, text)
+
+    export_lines = "".join(f"window.__ACL__.{name} = {name};\n" for name in exports)
+    return text.strip() + "\n\n" + export_lines
 
 
 def _replace_import(match: re.Match) -> str:
