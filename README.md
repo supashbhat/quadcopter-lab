@@ -41,6 +41,7 @@ Direct file-open is also supported by opening `index.html` in a browser. The rep
 - `Export Log` downloads recent telemetry as JSON
 - The slider panel adjusts control weighting, estimator trust, measurement noise, and wind strength
 - `Guided Demo` walks through the recommended comparison sequence
+- Keyboard shortcuts mirror the main actions (`R`, `G`, `M`, `T`, `O`, `Space`, `D`, `E`)
 
 ## What The Demo Shows
 
@@ -66,6 +67,8 @@ The benchmark cards summarize the current run with:
 - `Effort Peak`
 
 These are lightweight comparison metrics, intended to make controller behavior easier to interpret at a glance.
+
+The interface also keeps the latest `LQR` and `PID` recovery samples side by side and generates a short comparison verdict once both modes have been exercised.
 
 ## Project Structure
 

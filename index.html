@@ -143,6 +143,12 @@
                 <p id="pidSummary">Switch to PID or use the guided demo to generate a baseline.</p>
               </article>
             </div>
+            <div class="verdict-card">
+              <div class="verdict-card__eyebrow">Comparison Verdict</div>
+              <p id="comparisonVerdict">
+                Capture both an LQR run and a PID run to generate a direct recovery comparison.
+              </p>
+            </div>
             <div class="readouts">
               <div class="readout">
                 <div class="readout__title">Motor Command</div>
@@ -172,12 +178,25 @@
               </div>
               <h3 id="demoTitle">Start the controls walkthrough</h3>
               <p id="demoBody">
-                This guided run stages the exact sequence worth showing in a portfolio review: LQR recovery, disturbance rejection,
-                PID comparison, then route tracking.
+                This guided run stages a clean comparison sequence: LQR recovery, disturbance rejection, PID baseline behavior,
+                then route tracking.
               </p>
               <div class="demo-card__actions">
                 <button class="button button--primary" id="demoAdvanceButton">Start Demo</button>
                 <button class="button" id="demoResetButton">Reset Demo</button>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div class="shortcut-card__title">Shortcuts</div>
+              <div class="shortcut-grid">
+                <span><kbd>R</kbd> Reset</span>
+                <span><kbd>G</kbd> Gust</span>
+                <span><kbd>M</kbd> Mode</span>
+                <span><kbd>T</kbd> Target</span>
+                <span><kbd>O</kbd> Route</span>
+                <span><kbd>Space</kbd> Pause</span>
+                <span><kbd>D</kbd> Demo</span>
+                <span><kbd>E</kbd> Export</span>
               </div>
             </div>
             <p>

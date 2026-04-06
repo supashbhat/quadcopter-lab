@@ -25,6 +25,7 @@ let estimateRmsValue;
 let effortPeakValue;
 let lqrSummary;
 let pidSummary;
+let comparisonVerdict;
 let demoStepTag;
 let demoProgress;
 let demoTitle;
@@ -70,6 +71,7 @@ function boot() {
     effortPeakValue = requireElement("effortPeakValue");
     lqrSummary = requireElement("lqrSummary");
     pidSummary = requireElement("pidSummary");
+    comparisonVerdict = requireElement("comparisonVerdict");
     demoStepTag = requireElement("demoStepTag");
     demoProgress = requireElement("demoProgress");
     demoTitle = requireElement("demoTitle");
@@ -87,6 +89,7 @@ function boot() {
 
     buildSliders();
     wireButtons();
+    bindShortcuts();
     benchmarkTracker = new BenchmarkTracker();
     demoDirector = new DemoDirector();
     benchmarkTracker.startEpisode(sim, "Initial hover recovery");
@@ -192,6 +195,30 @@ function wireButtons() {
   demoResetButton.addEventListener("click", () => demoDirector.reset());
 }
 
+function bindShortcuts() {
+  window.addEventListener("keydown", (event) => {
+    const activeTag = document.activeElement?.tagName;
+    if (activeTag === "INPUT" || activeTag === "TEXTAREA") {
+      return;
+    }
+
+    if (event.code === "Space") {
+      event.preventDefault();
+      pauseButton.click();
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    if (key === "r") resetButton.click();
+    if (key === "g") gustButton.click();
+    if (key === "m") modeButton.click();
+    if (key === "t") targetButton.click();
+    if (key === "o") routeButton.click();
+    if (key === "d") demoAdvanceButton.click();
+    if (key === "e") exportButton.click();
+  });
+}
+
 function syncText() {
   positionError.textContent = `${sim.metrics.positionError.toFixed(2)} m`;
   attitudeError.textContent = `${sim.metrics.attitudeError.toFixed(1)} deg`;
@@ -213,6 +240,7 @@ function syncText() {
   effortPeakValue.textContent = benchmark.effortPeak;
   lqrSummary.textContent = benchmarkTracker.getControllerSummary("LQR");
   pidSummary.textContent = benchmarkTracker.getControllerSummary("PID");
+  comparisonVerdict.textContent = benchmarkTracker.getComparisonVerdict();
   demoDirector.render();
 }
 
@@ -343,6 +371,43 @@ class BenchmarkTracker {
       return `No ${controller} recovery sample yet. Use the guided demo to capture one.`;
     }
     return `${summary.label}: settled ${summary.settlingTime}, peak ${summary.peakError}, estimate RMS ${summary.estimateRms}.`;
+  }
+
+  getComparisonVerdict() {
+    const lqr = this.history.LQR;
+    const pid = this.history.PID;
+    if (!lqr || !pid) {
+      return "Capture both an LQR run and a PID run to generate a direct recovery comparison.";
+    }
+
+    const fragments = [];
+    if (lqr.rawSettlingTime != null && pid.rawSettlingTime != null) {
+      if (Math.abs(lqr.rawSettlingTime - pid.rawSettlingTime) < 0.15) {
+        fragments.push("settled in roughly the same time");
+      } else if (lqr.rawSettlingTime < pid.rawSettlingTime) {
+        fragments.push(`settled faster (${lqr.settlingTime} vs ${pid.settlingTime})`);
+      } else {
+        fragments.push(`settled slower (${lqr.settlingTime} vs ${pid.settlingTime})`);
+      }
+    }
+
+    if (lqr.rawPeakError < pid.rawPeakError - 0.08) {
+      fragments.push(`held a smaller peak miss (${lqr.peakError} vs ${pid.peakError})`);
+    } else if (pid.rawPeakError < lqr.rawPeakError - 0.08) {
+      fragments.push(`accepted a larger peak miss (${lqr.peakError} vs ${pid.peakError})`);
+    }
+
+    if (lqr.rawEffortPeak < pid.rawEffortPeak - 0.08) {
+      fragments.push(`used less peak effort (${lqr.effortPeak} vs ${pid.effortPeak})`);
+    } else if (pid.rawEffortPeak < lqr.rawEffortPeak - 0.08) {
+      fragments.push(`used more peak effort (${lqr.effortPeak} vs ${pid.effortPeak})`);
+    }
+
+    if (fragments.length === 0) {
+      return "The latest LQR and PID runs landed very close together. Try a stronger gust or a different route to widen the comparison.";
+    }
+
+    return `Latest comparison: LQR ${fragments.join(", ")}.`;
   }
 
   export() {
