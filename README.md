@@ -29,6 +29,8 @@ Then open [http://localhost:4173](http://localhost:4173).
 
 Direct file-open is also supported by opening `index.html` in a browser. The repository includes a bundled browser script so the interface can run outside a local module server when needed.
 
+A portfolio-hosted build can also be served from the public site at `supashbhat.github.io/aerial-control-lab/`.
+
 ## Controls
 
 - `Reset` resets the current scenario
