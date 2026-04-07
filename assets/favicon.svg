@@ -4,19 +4,9 @@
       <stop stop-color="#182130"/>
       <stop offset="1" stop-color="#0B111C"/>
     </linearGradient>
-    <linearGradient id="stroke" x1="14" y1="10" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFEBC7"/>
-      <stop offset="0.55" stop-color="#F1C56E"/>
-      <stop offset="1" stop-color="#D89257"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32 32) rotate(90) scale(26)">
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32 32) rotate(90) scale(23)">
       <stop stop-color="#FFDFA8" stop-opacity=".22"/>
       <stop offset="1" stop-color="#FFDFA8" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="orb" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(0 0) scale(1)">
-      <stop stop-color="#FFF8E8"/>
-      <stop offset="0.62" stop-color="#F4CC74"/>
-      <stop offset="1" stop-color="#D89257"/>
     </radialGradient>
   </defs>
 
@@ -24,26 +14,67 @@
   <rect x="4.75" y="4.75" width="54.5" height="54.5" rx="16.25" stroke="#F0C36A" stroke-opacity=".2" stroke-width="1.5"/>
   <circle cx="32" cy="32" r="23" fill="url(#glow)"/>
 
-  <g stroke="url(#stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".92">
-    <path d="M32 13.5L19 21L17 34.5L27 47.5H37L47 34.5L45 21L32 13.5Z"/>
-    <path d="M19 21L32 27.5L45 21"/>
-    <path d="M17 34.5L32 27.5L47 34.5"/>
-    <path d="M27 47.5L32 27.5L37 47.5"/>
-    <path d="M32 13.5L24 30.5L27 47.5"/>
-    <path d="M32 13.5L40 30.5L37 47.5"/>
-    <path d="M24 30.5H40"/>
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <g stroke="rgba(176,122,84,0.44)" stroke-width="1.55" opacity=".82">
+      <line x1="24.44" y1="34.58" x2="34.78" y2="24.00"/>
+      <line x1="24.44" y1="34.58" x2="38.64" y2="38.01"/>
+      <line x1="34.78" y1="24.00" x2="38.64" y2="38.01"/>
+      <line x1="24.44" y1="34.58" x2="24.43" y2="24.54"/>
+      <line x1="24.43" y1="24.54" x2="34.78" y2="24.00"/>
+      <line x1="24.44" y1="34.58" x2="29.55" y2="42.23"/>
+      <line x1="29.55" y1="42.23" x2="38.64" y2="38.01"/>
+      <line x1="34.78" y1="24.00" x2="42.03" y2="29.22"/>
+      <line x1="38.64" y1="38.01" x2="42.03" y2="29.22"/>
+      <line x1="24.44" y1="34.58" x2="22.88" y2="34.53"/>
+      <line x1="34.15" y1="23.03" x2="34.78" y2="24.00"/>
+      <line x1="38.35" y1="38.25" x2="38.64" y2="38.01"/>
+      <line x1="24.43" y1="24.54" x2="22.88" y2="34.53"/>
+      <line x1="34.15" y1="23.03" x2="24.43" y2="24.54"/>
+      <line x1="29.55" y1="42.23" x2="22.88" y2="34.53"/>
+    </g>
+    <g stroke="#F1C56E" stroke-opacity=".95" stroke-width="1.9">
+      <line x1="34.15" y1="23.03" x2="42.03" y2="29.22"/>
+      <line x1="29.55" y1="42.23" x2="38.35" y2="38.25"/>
+      <line x1="38.35" y1="38.25" x2="42.03" y2="29.22"/>
+      <line x1="24.43" y1="24.54" x2="28.18" y2="28.55"/>
+      <line x1="29.55" y1="42.23" x2="30.45" y2="36.46"/>
+      <line x1="36.11" y1="30.60" x2="42.03" y2="29.22"/>
+      <line x1="22.88" y1="34.53" x2="28.18" y2="28.55"/>
+      <line x1="30.45" y1="36.46" x2="22.88" y2="34.53"/>
+      <line x1="34.15" y1="23.03" x2="28.18" y2="28.55"/>
+      <line x1="34.15" y1="23.03" x2="36.11" y2="30.60"/>
+      <line x1="30.45" y1="36.46" x2="38.35" y2="38.25"/>
+      <line x1="36.11" y1="30.60" x2="38.35" y2="38.25"/>
+      <line x1="30.45" y1="36.46" x2="28.18" y2="28.55"/>
+      <line x1="36.11" y1="30.60" x2="28.18" y2="28.55"/>
+      <line x1="36.11" y1="30.60" x2="30.45" y2="36.46"/>
+    </g>
   </g>
 
-  <g fill="url(#orb)">
-    <circle cx="32" cy="13.5" r="2.2"/>
-    <circle cx="19" cy="21" r="1.9"/>
-    <circle cx="45" cy="21" r="1.9"/>
-    <circle cx="17" cy="34.5" r="1.7"/>
-    <circle cx="47" cy="34.5" r="1.7"/>
-    <circle cx="27" cy="47.5" r="1.7"/>
-    <circle cx="37" cy="47.5" r="1.7"/>
-    <circle cx="32" cy="27.5" r="1.8"/>
-    <circle cx="24" cy="30.5" r="1.55"/>
-    <circle cx="40" cy="30.5" r="1.55"/>
+  <g>
+    <g fill="#D89257" fill-opacity=".76">
+      <circle cx="24.44" cy="34.58" r="1.55"/>
+      <circle cx="34.78" cy="24.00" r="1.55"/>
+      <circle cx="38.64" cy="38.01" r="1.55"/>
+      <circle cx="24.43" cy="24.54" r="1.55"/>
+      <circle cx="29.55" cy="42.23" r="1.55"/>
+      <circle cx="42.03" cy="29.22" r="1.55"/>
+    </g>
+    <g fill="#F4CC74">
+      <circle cx="22.88" cy="34.53" r="1.95"/>
+      <circle cx="34.15" cy="23.03" r="1.95"/>
+      <circle cx="38.35" cy="38.25" r="1.95"/>
+      <circle cx="28.18" cy="28.55" r="1.95"/>
+      <circle cx="30.45" cy="36.46" r="1.95"/>
+      <circle cx="36.11" cy="30.60" r="1.95"/>
+    </g>
+    <g fill="#FFF7E7" opacity=".92">
+      <circle cx="22.88" cy="34.53" r=".74"/>
+      <circle cx="34.15" cy="23.03" r=".74"/>
+      <circle cx="38.35" cy="38.25" r=".74"/>
+      <circle cx="28.18" cy="28.55" r=".74"/>
+      <circle cx="30.45" cy="36.46" r=".74"/>
+      <circle cx="36.11" cy="30.60" r=".74"/>
+    </g>
   </g>
 </svg>
