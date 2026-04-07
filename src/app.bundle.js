@@ -1141,21 +1141,38 @@ function drawTarget(ctx, target, width, height, cameraAngle) {
 }
 
 function drawTelemetryOverlay(ctx, sim, width, height) {
-  const lines = [
-    `Target: ${sim.targetName}`,
-    `Scenario: ${sim.sceneName}`,
-    `Estimated gap: ${sim.metrics.estimateGap.toFixed(2)} m`,
-    `Wind: ${sim.metrics.windForce.toFixed(2)} N`,
+  const rows = [
+    ["Target", sim.targetName],
+    ["Scenario", sim.sceneName],
+    ["Estimate", `${sim.metrics.estimateGap.toFixed(2)} m`],
+    ["Wind", `${sim.metrics.windForce.toFixed(2)} N`],
   ];
-  ctx.fillStyle = "rgba(8, 16, 26, 0.78)";
-  ctx.strokeStyle = "rgba(127, 180, 242, 0.14)";
-  roundRect(ctx, width - 278, height - 164, 236, 118, 18, true, true);
+  const panelWidth = 278;
+  const panelHeight = 150;
+  const x = width - panelWidth - 38;
+  const y = height - panelHeight - 38;
+  const titleX = x + 24;
+  const titleY = y + 30;
+  const rowStartY = titleY + 34;
+  const rowGap = 22;
+  const valueX = x + 126;
+
+  ctx.fillStyle = "rgba(8, 16, 26, 0.84)";
+  ctx.strokeStyle = "rgba(127, 180, 242, 0.18)";
+  roundRect(ctx, x, y, panelWidth, panelHeight, 18, true, true);
+
   ctx.fillStyle = "#edf5ff";
-  ctx.font = "600 15px Inter, sans-serif";
-  ctx.fillText("Flight Notes", width - 252, height - 130);
-  ctx.font = "500 13px Inter, sans-serif";
-  ctx.fillStyle = "rgba(180, 196, 214, 0.95)";
-  lines.forEach((line, index) => ctx.fillText(line, width - 252, height - 100 + index * 22));
+  ctx.font = "700 15px Inter, sans-serif";
+  ctx.fillText("Flight Notes", titleX, titleY);
+
+  ctx.font = "600 13px Inter, sans-serif";
+  rows.forEach(([label, value], index) => {
+    const rowY = rowStartY + index * rowGap;
+    ctx.fillStyle = "rgba(182, 198, 218, 0.82)";
+    ctx.fillText(label, titleX, rowY);
+    ctx.fillStyle = "rgba(237, 245, 255, 0.95)";
+    ctx.fillText(value, valueX, rowY);
+  });
 }
 
 function drawInsetTopDown(ctx, sim, width, height) {
