@@ -44,8 +44,6 @@ let paused = false;
 let benchmarkTracker;
 let demoDirector;
 
-boot();
-
 function boot() {
   try {
     sim = new QuadcopterLab();
@@ -544,3 +542,5 @@ class DemoDirector {
     demoAdvanceButton.textContent = step.button;
   }
 }
+
+boot();
