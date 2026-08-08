@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aerial Control Lab</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg?v=20260406f" />
+    <link rel="shortcut icon" href="./assets/favicon.svg?v=20260406f" />
+    <link rel="apple-touch-icon" href="./assets/favicon.svg?v=20260406f" />
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div class="intro intro--active" id="intro">
+      <div class="intro__core">
+        <div class="intro__halo"></div>
+        <div class="intro__orb"></div>
+        <div class="intro__title-wrap">
+          <div class="intro__eyebrow">Optimal Control + State Estimation</div>
+          <h1 class="intro__title">Aerial Control Lab</h1>
+          <p class="intro__subtitle">
+            Nonlinear quadcopter dynamics, LQR hover control, and Kalman fusion in one polished sandbox.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="boot-banner" id="bootBanner" hidden></div>
+
+    <div class="page-shell">
+      <div class="ambient ambient--left"></div>
+      <div class="ambient ambient--right"></div>
+
+      <header class="topbar glass">
+        <div class="brand">
+          <div class="brand__glyph">
+            <span class="brand__ring"></span>
+            <span class="brand__dot brand__dot--a"></span>
+            <span class="brand__dot brand__dot--b"></span>
+            <span class="brand__dot brand__dot--c"></span>
+            <span class="brand__dot brand__dot--d"></span>
+          </div>
+          <div>
+            <div class="brand__title">Aerial Control Lab</div>
+            <div class="brand__subtitle">Blue-gold quadcopter controls studio</div>
+          </div>
+        </div>
+        <div class="topbar__meta">
+          <span class="pill">LQR</span>
+          <span class="pill">Kalman</span>
+          <span class="pill">6-DOF</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="viewport glass">
+          <div class="viewport__header">
+            <div>
+              <span class="eyebrow">Simulation View</span>
+              <h2>Hover Recovery With Live Estimation</h2>
+              <p class="viewport__hint">
+                Blue frame = true vehicle, gold ghost = estimated state, gold reticle = target. Insets show top-down and elevation views.
+              </p>
+            </div>
+            <div class="status">
+              <span class="status__dot" id="statusDot"></span>
+              <span id="statusLabel">Stabilizing</span>
+            </div>
+          </div>
+          <canvas id="sceneCanvas" width="1240" height="760"></canvas>
+        </section>
+
+        <section class="dock">
+          <section class="panel glass dock__controls">
+            <span class="eyebrow">Control Deck</span>
+            <div class="control-grid">
+              <button class="button button--primary" id="resetButton">Reset</button>
+              <button class="button" id="gustButton">Wind Gust</button>
+              <button class="button" id="targetButton">Target: Hover</button>
+              <button class="button" id="scenarioButton">Scenario: Recover</button>
+              <button class="button" id="modeButton">Mode: LQR</button>
+              <button class="button" id="routeButton">Route: Off</button>
+              <button class="button" id="pauseButton">Pause</button>
+              <button class="button" id="exportButton">Export Log</button>
+            </div>
+            <div class="slider-stack" id="sliderStack"></div>
+          </section>
+
+          <section class="panel glass dock__telemetry">
+            <span class="eyebrow">Telemetry</span>
+            <div class="telemetry-grid">
+              <div class="metric">
+                <span class="metric__label">Position Error</span>
+                <strong id="positionError">0.00 m</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Attitude Error</span>
+                <strong id="attitudeError">0.0 deg</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Wind Force</span>
+                <strong id="windValue">0.0 N</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Settling Hint</span>
+                <strong id="settleValue">Recovering</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Controller</span>
+                <strong id="controllerValue">LQR</strong>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Route Mode</span>
+                <strong id="routeValue">Off</strong>
+              </div>
+            </div>
+            <div class="benchmark-strip">
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Settling Time</span>
+                <strong class="benchmark-card__value" id="settlingTimeValue">Tracking...</strong>
+                <p>How long it took this recovery window to get back inside the hover band.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Peak Error</span>
+                <strong class="benchmark-card__value" id="peakErrorValue">0.00 m</strong>
+                <p>Largest position miss during the current recovery or route segment.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Estimate RMS</span>
+                <strong class="benchmark-card__value" id="estimateRmsValue">0.00 m</strong>
+                <p>Average gap between the true vehicle and the Kalman state estimate.</p>
+              </article>
+              <article class="benchmark-card">
+                <span class="benchmark-card__label">Effort Peak</span>
+                <strong class="benchmark-card__value" id="effortPeakValue">0.00</strong>
+                <p>Largest control burst used to recover, useful for LQR vs PID comparison.</p>
+              </article>
+            </div>
+            <div class="compare-grid">
+              <article class="compare-card">
+                <div class="compare-card__title">Last LQR Run</div>
+                <p id="lqrSummary">Run the guided demo to capture a clean LQR recovery sample.</p>
+              </article>
+              <article class="compare-card">
+                <div class="compare-card__title">Last PID Run</div>
+                <p id="pidSummary">Switch to PID or use the guided demo to generate a baseline.</p>
+              </article>
+            </div>
+            <div class="verdict-card">
+              <div class="verdict-card__eyebrow">Comparison Verdict</div>
+              <p id="comparisonVerdict">
+                Capture both an LQR run and a PID run to generate a direct recovery comparison.
+              </p>
+            </div>
+            <div class="readouts">
+              <div class="readout">
+                <div class="readout__title">Motor Command</div>
+                <canvas id="motorCanvas" width="360" height="110"></canvas>
+              </div>
+              <div class="readout">
+                <div class="readout__title">Estimated vs True Error</div>
+                <canvas id="errorCanvas" width="360" height="130"></canvas>
+              </div>
+              <div class="readout">
+                <div class="readout__title">Control Effort</div>
+                <canvas id="effortCanvas" width="360" height="130"></canvas>
+              </div>
+              <div class="readout">
+                <div class="readout__title">Altitude / Route Progress</div>
+                <canvas id="altitudeCanvas" width="360" height="130"></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel glass dock__notes">
+            <span class="eyebrow">Guided Demo + Notes</span>
+            <div class="demo-card">
+              <div class="demo-card__meta">
+                <span class="demo-card__eyebrow" id="demoStepTag">Guided Demo</span>
+                <span class="demo-card__progress" id="demoProgress">Ready</span>
+              </div>
+              <h3 id="demoTitle">Start the controls walkthrough</h3>
+              <p id="demoBody">
+                This guided run stages a clean comparison sequence: LQR recovery, disturbance rejection, PID baseline behavior,
+                then route tracking.
+              </p>
+              <div class="demo-card__actions">
+                <button class="button button--primary" id="demoAdvanceButton">Start Demo</button>
+                <button class="button" id="demoResetButton">Reset Demo</button>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <div class="shortcut-card__title">Shortcuts</div>
+              <div class="shortcut-grid">
+                <span><kbd>R</kbd> Reset</span>
+                <span><kbd>G</kbd> Gust</span>
+                <span><kbd>M</kbd> Mode</span>
+                <span><kbd>T</kbd> Target</span>
+                <span><kbd>O</kbd> Route</span>
+                <span><kbd>Space</kbd> Pause</span>
+                <span><kbd>D</kbd> Demo</span>
+                <span><kbd>E</kbd> Export</span>
+              </div>
+            </div>
+            <p>
+              The true dynamics are integrated nonlinearly with quaternions, while the controller and estimator operate on a hover
+              linearization. That separation keeps the physics expressive while letting you feel how optimal control and state
+              estimation work in practice.
+            </p>
+            <ul class="feature-list">
+              <li>Rotor mixer with saturation and realized torque reconstruction</li>
+              <li>Optional PID baseline for side-by-side controller feel</li>
+              <li>Motor spool lag and route playback for less toy-like behavior</li>
+              <li>Live Q/R tuning for controller and filter behavior</li>
+              <li>Noisy sensor fusion for position, attitude, and angular-rate estimates</li>
+            </ul>
+            <div class="help-callout">
+              <div class="help-callout__title">What to notice</div>
+              <p>
+                LQR should usually settle faster with a smoother effort story because it is optimizing a full state-error cost. PID is a
+                strong baseline, but it reacts more locally and tends to overshoot or work harder when the same gust hits.
+              </p>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.__ACL_BOOTED = false;
+      window.__ACL_BOOT_TIMEOUT = null;
+
+      window.__ACL_CLEAR_INTRO = function () {
+        const intro = document.getElementById("intro");
+        if (!intro) return;
+        intro.classList.add("intro--done");
+        window.setTimeout(() => {
+          if (intro.parentNode) {
+            intro.remove();
+          }
+        }, 420);
+      };
+
+      window.__ACL_SHOW_BOOT_ERROR = function (message) {
+        const banner = document.getElementById("bootBanner");
+        if (!banner) return;
+        banner.hidden = false;
+        banner.textContent = message;
+        window.__ACL_CLEAR_INTRO();
+      };
+
+      window.__ACL_BOOT_TIMEOUT = window.setTimeout(() => {
+        if (!window.__ACL_BOOTED) {
+          window.__ACL_SHOW_BOOT_ERROR(
+            "Startup is taking longer than expected. The page was force-opened; if controls stay unresponsive, refresh once or use ./scripts/serve.sh.",
+          );
+        }
+      }, 2600);
+    </script>
+    <script defer src="./src/app.bundle.js"></script>
+  </body>
+</html>
