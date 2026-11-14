@@ -1,8 +1,6 @@
 # Aerial Control Lab
 
-Aerial Control Lab is an interactive quadcopter controls sandbox built to make modern control and estimation ideas easier to see, compare, and reason about. It combines a nonlinear 6-DOF rigid-body simulation with hover-state `LQR` control, a `PID` baseline, and a discrete `Kalman` filter inside a browser-based interface designed for experimentation.
-
-The project is aimed at the space between theory and intuition: changing gains, injecting disturbances, comparing controller behavior, and seeing how state estimation tracks a noisy plant in real time.
+Aerial Control Lab is a browser-based quadcopter simulation for trying out control and state estimation. It combines a nonlinear six-degree-of-freedom model with hover-state `LQR`, a `PID` baseline, and a discrete `Kalman` filter. I built it to make the effects of changing gains, noisy measurements, and disturbances visible while the simulation runs.
 
 ## Highlights
 
@@ -72,7 +70,7 @@ These are lightweight comparison metrics, intended to make controller behavior e
 
 The interface also keeps the latest `LQR` and `PID` recovery samples side by side and generates a short comparison verdict once both modes have been exercised.
 
-## Project Structure
+## Source
 
 - `index.html` — interface shell and layout
 - `styles/main.css` — visual system, motion, and layout styling
@@ -82,17 +80,4 @@ The interface also keeps the latest `LQR` and `PID` recovery samples side by sid
 - `src/quadcopter.js` — nonlinear dynamics, routing, disturbance logic, and simulation state
 - `src/renderer.js` — scene rendering, overlays, and chart drawing
 - `src/app.js` — UI orchestration and guided demo logic
-- `docs/control-notes.md` — control and estimator notes
-- `ROADMAP.md` — next steps for controls, analysis, and native-core work
-
-## Roadmap
-
-Near-term directions include:
-
-- richer `Q/R` tuning panels
-- batch scenario sweeps and replayable comparisons
-- estimator covariance visualization
-- stronger route-tracking and trajectory-following controllers
-- migration of the control/dynamics core into a native C++ library
-
-More detail is available in [ROADMAP.md](ROADMAP.md).
+- `docs/control-notes.md` — model, control, estimator, and metric notes
