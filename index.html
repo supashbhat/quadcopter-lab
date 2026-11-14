@@ -7,13 +7,14 @@
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg?v=20260406f" />
     <link rel="shortcut icon" href="./assets/favicon.svg?v=20260406f" />
     <link rel="apple-touch-icon" href="./assets/favicon.svg?v=20260406f" />
+    <link rel="stylesheet" href="./assets/css/site-brand.css" />
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
     <div class="intro intro--active" id="intro">
       <div class="intro__core">
         <div class="intro__halo"></div>
-        <div class="intro__orb"></div>
+        <div class="intro__orb"><canvas class="icosa-shell" data-shell-size="76" aria-label="Drag to spin the icosahedron"></canvas></div>
         <div class="intro__title-wrap">
           <div class="intro__eyebrow">Optimal Control + State Estimation</div>
           <h1 class="intro__title">Aerial Control Lab</h1>
@@ -32,13 +33,7 @@
 
       <header class="topbar glass">
         <div class="brand">
-          <div class="brand__glyph">
-            <span class="brand__ring"></span>
-            <span class="brand__dot brand__dot--a"></span>
-            <span class="brand__dot brand__dot--b"></span>
-            <span class="brand__dot brand__dot--c"></span>
-            <span class="brand__dot brand__dot--d"></span>
-          </div>
+          <div class="brand__glyph"><canvas class="icosa-shell" data-shell-size="58" aria-label="Drag to spin the icosahedron"></canvas></div>
           <div>
             <div class="brand__title">Aerial Control Lab</div>
             <div class="brand__subtitle">Blue-gold quadcopter controls studio</div>
@@ -257,5 +252,6 @@
       }, 2600);
     </script>
     <script defer src="./src/app.bundle.js"></script>
+    <script src="./assets/js/icosa-shell.js"></script>
   </body>
 </html>

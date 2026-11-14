@@ -29,6 +29,8 @@ Direct file-open is also supported by opening `index.html` in a browser. The rep
 
 A portfolio-hosted build can also be served from the public site at `supashbhat.github.io/aerial-control-lab/`.
 
+The intro and header use the same colored icosahedron as my portfolio. Drag the mark to spin it; its canvas script and styling are included in this repository so the local page does not depend on the portfolio site.
+
 ## Controls
 
 - `Reset` resets the current scenario
