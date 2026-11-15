@@ -55,7 +55,9 @@ const rotateVertex = (vertex, rx, ry, rz) => {
 const setupIcosaShell = (canvas) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const isNavShell = !!canvas.closest(".brand-mark");
+    const isNavShell = !!canvas.closest(
+        ".brand-mark, .brand__glyph, .lab-header-mark, .project-brand-row, .corner-orb",
+    );
 
     let width = 0;
     let height = 0;
